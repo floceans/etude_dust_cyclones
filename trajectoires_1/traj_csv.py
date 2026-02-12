@@ -29,8 +29,9 @@ tracks = {}
 
 # --- Lecture CSV ---
 for year in range(annee_debut, annee_fin):
-    filename = f"/home/florent/Documents/CNRM/git/etude_dust_cyclones/trajectoires_1/fichiers_traj/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.rel200.csv"
-    
+    #filename = f"/home/florent/Documents/CNRM/git/etude_dust_cyclones/trajectoires_1/fichiers_traj/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.rel200.csv"
+    filename = f"fichiers_traj/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.rel200.csv"
+
     if not os.path.exists(filename):
         print(f"Attention : Le fichier '{filename}' est introuvable. Passage au suivant.")
         continue
