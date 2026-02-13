@@ -59,7 +59,7 @@ for year in range(annee_debut, annee_fin):
             lon_val = float(row['lon'])
             if lon_val > 180: lon_val -= 360 
             
-            if float(row['pmin']) < 990 :
+            if float(row['pmin']) <seuil_p :
                 tracks[track_id]['lon'].append(lon_val)
                 tracks[track_id]['lat'].append(float(row['lat']))
                 tracks[track_id]['press'].append(float(row['pmin'])) # Pression centrale [cite: 10]
