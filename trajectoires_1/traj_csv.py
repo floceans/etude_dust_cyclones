@@ -7,22 +7,31 @@ import sys
 import cartopy.crs as ccrs
 
 '''
-### A LIRE ###
 1er arg -> année début, defaut : 2020
 2eme arg -> annee fin, defaut : 2022
 3eme arg -> seuil pression maximale dans plot, defaut : 1000
 '''
 
 
+###
+#appliquer seuil sur vorticité sur traj relaxés rel10
+#impacts SAL sur cyclogenese  => c quoi cyclogenese sur aladin (reel vmax>17m/s), seuil sur vorticité ?
+# carte densité cyclogenese, trouver seuil vorticité
+# comparer densité ibtracks & aladin
+# run de controle :forcé par era5 avec effets aerosols
+# sans effet : nora dust, 
+###
+
+
 # --- Gestion des args ---
 
 
-annee_debut = int(sys.argv[1]) if len(sys.argv) > 1 else 2020
+annee_debut = int(sys.argv[1]) if len(sys.argv) > 1 else 2018
 
 # Si len(sys.argv) > 2, on prend l'argument 2, sinon on met 1961 par défaut
 annee_fin = int(sys.argv[2]) if len(sys.argv) > 2 else 2022
 
-seuil_p = int(sys.argv[3]) if len(sys.argv) > 3 else 1000
+seuil_p = int(sys.argv[3]) if len(sys.argv) > 3 else 1111
 
 # Zone Atlantique Nord pour le filtrage ###############"" filtrage spacial, mais déjà pas de data lat>30, why ??
 ATLANTIC_LON_MIN, ATLANTIC_LON_MAX = -88.0, -27.0
@@ -39,7 +48,7 @@ tracks = {}
 # --- Lecture CSV ---
 for year in range(annee_debut, annee_fin):
     #filename = f"/home/florent/Documents/CNRM/git/etude_dust_cyclones/trajectoires_1/fichiers_traj/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.rel200.csv"
-    filename = f"fichiers_traj/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.rel200.csv"
+    filename = f"fichiers_traj/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.rel10.csv"
 
     if not os.path.exists(filename):
         print(f"Attention : Le fichier '{filename}' est introuvable. Passage au suivant.")
@@ -59,7 +68,11 @@ for year in range(annee_debut, annee_fin):
             lon_val = float(row['lon'])
             if lon_val > 180: lon_val -= 360 
             
+<<<<<<< HEAD
+            if float(row['pmin']) < 1010 :
+=======
             if float(row['pmin']) <seuil_p :
+>>>>>>> df71c346857471fff4c0f9b01c2922eb29d4a2b3
                 tracks[track_id]['lon'].append(lon_val)
                 tracks[track_id]['lat'].append(float(row['lat']))
                 tracks[track_id]['press'].append(float(row['pmin'])) # Pression centrale [cite: 10]
