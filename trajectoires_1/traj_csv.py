@@ -5,6 +5,7 @@ import os
 import csv
 import sys
 import cartopy.crs as ccrs
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
 '''
 1er arg -> année début, defaut : 2020
@@ -26,16 +27,16 @@ import cartopy.crs as ccrs
 # --- Gestion des args ---
 
 
-annee_debut = int(sys.argv[1]) if len(sys.argv) > 1 else 2018
+annee_debut = int(sys.argv[1]) if len(sys.argv) > 1 else 2015
 
 # Si len(sys.argv) > 2, on prend l'argument 2, sinon on met 1961 par défaut
-annee_fin = int(sys.argv[2]) if len(sys.argv) > 2 else 2022
+annee_fin = int(sys.argv[2]) if len(sys.argv) > 2 else 2020
 
-seuil_p = int(sys.argv[3]) if len(sys.argv) > 3 else 1111
+seuil_p = int(sys.argv[3]) if len(sys.argv) > 3 else 1010
 
 # Zone Atlantique Nord pour le filtrage ###############"" filtrage spacial, mais déjà pas de data lat>30, why ??
 ATLANTIC_LON_MIN, ATLANTIC_LON_MAX = -88.0, -27.0
-ATLANTIC_LAT_MIN, ATLANTIC_LAT_MAX = 8.0, 70.0
+ATLANTIC_LAT_MIN, ATLANTIC_LAT_MAX = 8.0, 35.0
 
 def is_in_atlantic(lon, lat):
     #Filtre sur premier point de la trajectoire
@@ -68,11 +69,7 @@ for year in range(annee_debut, annee_fin):
             lon_val = float(row['lon'])
             if lon_val > 180: lon_val -= 360 
             
-<<<<<<< HEAD
-            if float(row['pmin']) < 1010 :
-=======
-            if float(row['pmin']) <seuil_p :
->>>>>>> df71c346857471fff4c0f9b01c2922eb29d4a2b3
+            if float(row['pmin']) < seuil_p: # Filtrage sur pression maximale:
                 tracks[track_id]['lon'].append(lon_val)
                 tracks[track_id]['lat'].append(float(row['lat']))
                 tracks[track_id]['press'].append(float(row['pmin'])) # Pression centrale [cite: 10]
@@ -93,12 +90,21 @@ if not final_tracks:
 
 # --- Création de la carte ---
 fig = plt.figure(figsize=(15, 10))
-ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-ax.set_extent([-100, 10, 0, 65], crs=ccrs.PlateCarree()) # cadre du canva ploté 
-ax.coastlines(resolution='50m', color='black', linewidth=1.5)
-gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False)
-gl.top_labels = False # pr plot label juste une fois en bas et à gauche
+ax = plt.axes(projection=ccrs.PlateCarree())
+
+# On utilise les limites de ton script original
+ax.set_extent([-100, 10, 0, 35], crs=ccrs.PlateCarree()) 
+
+# STYLE SEMBLABLE À TRAJ_IBTRACKS
+ax.stock_img()  # Fond relief / océan
+ax.coastlines(resolution='50m', color='black', linewidth=1.2)
+
+# Grille et labels formatés
+gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, alpha=0.3)
+gl.top_labels = False 
 gl.right_labels = False
+gl.xformatter = LongitudeFormatter()
+gl.yformatter = LatitudeFormatter()
 
 
 
@@ -118,7 +124,7 @@ for track_id, data in final_tracks.items():
     
     lc = LineCollection(segments, cmap='jet_r', norm=norm, transform=ccrs.PlateCarree())
     lc.set_array(p[:-1])
-    lc.set_linewidth(3)
+    lc.set_linewidth(2)
     lc.set_alpha(0.6)
     ax.add_collection(lc)
 
@@ -127,5 +133,6 @@ sm = plt.cm.ScalarMappable(cmap='jet_r', norm=norm)
 cb = plt.colorbar(sm, ax=ax, orientation='vertical', pad=0.02, aspect=30, shrink=0.75)
 cb.set_label('Pression au centre (hPa) [pmin]')
 
-plt.title(f"Trajectoires ERA5 : {annee_debut} à {annee_fin} ({len(final_tracks)} systèmes)")
+plt.title(f"Trajectoires Aladin/ERA5 : {annee_debut} à {annee_fin} ({len(final_tracks)} systèmes)")
+plt.savefig(f"plot/trajectoires_{annee_debut}_{annee_fin}_pmin{seuil_p}.png", dpi=300, bbox_inches='tight')
 plt.show()
