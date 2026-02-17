@@ -70,7 +70,7 @@ ax.stock_img() # Fond de carte optionnel
 
 # Tracé de la densité
 levels = np.linspace(0, zi.max(), 15)
-cf = ax.contourf(xi, yi, zi, levels=levels, cmap='YlOrRd', transform=ccrs.PlateCarree(), alpha=0.8)
+cf = ax.contourf(xi, yi, zi, levels=levels, cmap='turbo', transform=ccrs.PlateCarree(), alpha=0.8)
 
 plt.colorbar(cf, label='Densité d\'activité (Points > 17m/s)', orientation='vertical', shrink=0.7)
 

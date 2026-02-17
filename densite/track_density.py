@@ -18,8 +18,8 @@ dirin = '.'
 if not os.path.exists('images'):
     os.makedirs('images')
 
-yearmin = 2004
-yearmax = 2005
+yearmin = 1961
+yearmax = 1962
 
 ###################################################
 # Domain selection
@@ -49,7 +49,8 @@ data = {'lon': [], 'lat': [], 'vmax': [], 'pmin': []}
 
 for iyear in range(yearmin, yearmax):
     yp1 = iyear + 1
-    fin = f"suiamip_g359_{iyear}.vor5_res17_1_-2_-5.rel200"
+    fin = f"/home/puyf/Documents/git/etude_dust_cyclones/trajectoires_1/suiERA5_evaluation_1961-1962.vor5_res17_1_-2_5.rel10"
+    #f"suiamip_g359_{iyear}.vor5_res17_1_-2_-5.rel200"
     # local mettre :   f"suiATL_{iyear}-{yp1}.vor5_res17_1_-2_5.rel200"
 
     path = os.path.join(dirin, fin)
@@ -123,6 +124,6 @@ plt.colorbar(cs, ax=ax, shrink=0.6)
 ax.coastlines(resolution="50m")
 
 plt.savefig(f'images/density_{yearmin}-{yearmax}_{domain}.pdf', bbox_inches='tight')
+#plt.plot(cs)
 plt.close()
 
-print("Figure saved!")
