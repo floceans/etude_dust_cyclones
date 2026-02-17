@@ -37,7 +37,7 @@ def convert_ibtracs_to_suiera5(input_file, output_file):
     output_df['vomax'] = 0.0
     
     # vmax : Conversion kts -> m/s (si USA_WIND est présent)
-    output_df['vmax'] = df['USA_WIND'] * 0.514444
+    output_df['vmax'] = df['USA_WIND'] * 0.514444 /1.12 # pour convertir frequence mesure 
     
     # pmin : Pression minimale
     output_df['pmin'] = df['USA_PRES']
