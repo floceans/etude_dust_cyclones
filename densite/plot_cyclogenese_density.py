@@ -1,59 +1,34 @@
-import csv
 import numpy as np
-from scipy.stats import gaussian_kde
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import sys
-from func import fichier_source, indice_global_cyclogenese
-
-    
+from func import fichier_source, indice_global_cyclogenese, get_density_cyclogenese
 
 
+AN_MIN = 2018
+AN_MAX = 2022
+SVORT = 1#10,25, 100 à tester selon Fabrice
 
+## fichiers source & args
 filename = fichier_source(sys.argv)
 
-yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 2018
-yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 2022 
+yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else AN_MIN
+yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else AN_MAX 
 
-lons = []
-lats = []
+seuil_vort = int(sys.argv[4]) if len(sys.argv) > 4 else SVORT #seuil de vorticité pour définir la cyclogenèse (ex: 1e-5 s^-1)
 
-# --- 2. Lecture manuelle du CSV ---
-print(f"--- Extraction des points de cyclogenèse (step=1) dans {filename} ---")
-
-with open(filename, mode='r', encoding='utf-8') as f:
-    nbr = 0
-    reader = csv.DictReader(f)
-    for row in reader:
-        year = int(row['date'][:4])
-        if yearmin <= year <= yearmax and row['step'] == '1':
-            nbr += 1
-            lons.append(float(row['lon']))
-            lats.append(float(row['lat']))
-
-x = np.array(lons)
-y = np.array(lats)
-
-if len(x) < 10:
-    print("Erreur : Pas assez de points trouvés.")
-    sys.exit()
-
-# --- 3. Calcul de la densité (KDE) ---
+#calcul
 lonmin, lonmax = -105, 5
 latmin, latmax = 5, 35
 
-xi, yi = np.mgrid[lonmin:lonmax:200j, latmin:latmax:200j]
-coords = np.vstack([xi.flatten(), yi.flatten()])
-
-k = gaussian_kde(np.vstack([x, y]))
-zi = k(coords)
-zi = zi.reshape(xi.shape) * (len(x) / 4 * 25)
+zi, x,y, xi, yi, npts = get_density_cyclogenese(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vort)
 
 indice = indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax)
-print(f"Indice global de cyclogenèse (step=1) pour {filename} : {indice:.2f} (nombre de points : {len(x)})")
+print(f"Indice global de cyclogenèse (step=1) pour {filename} : {indice:.2f} (nombre de points : {npts})")
+print(f"Années couvertes : {yearmin} à {yearmax}")
 
 
-# --- 4. Plotting ---
+# plot
 proj = ccrs.PlateCarree()
 projcl = ccrs.PlateCarree(central_longitude=-50)
 

@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde
+import csv
+import sys
 
 
 # fichier source
@@ -47,5 +49,41 @@ def get_density(filename, yearmin, yearmax, xi, yi):
     # On normalise par le nombre de points pour que la différence soit comparable
     # ou on garde le scaling original (ici conservé : nb_points / 4 * 25)
     zi = zi.reshape(xi.shape) * (len(x) / 4 * 25)
-    return zi, len(x)
+    return zi,x,y, len(x)
 
+
+def get_density_cyclogenese(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vort):
+    print(f"--- Extraction des points de cyclogenèse (step=1) dans {filename} ---")
+
+    lons = []
+    lats = []
+    with open(filename, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        nbr = 0
+        for row in reader: 
+        ### magouille avec nbr pour prendre que premier pt avec vort > seuil_vort pour chaque cyclone
+            if float(row['step']) == 1 :
+                nbr = 0
+            year = int(row['date'][:4])
+            if yearmin <= year <= yearmax and float(row['vomax']) > seuil_vort and nbr == 0: #and row['step'] == '1':
+                nbr += 1
+                lons.append(float(row['lon']))
+                lats.append(float(row['lat']))
+
+    x = np.array(lons)
+    y = np.array(lats)
+
+    if len(x) < 10:
+        print("Erreur : Pas assez de points trouvés.")
+        sys.exit()
+
+    # --- 3. Calcul de la densité (KDE) ---
+
+    xi, yi = np.mgrid[lonmin:lonmax:200j, latmin:latmax:200j]
+    coords = np.vstack([xi.flatten(), yi.flatten()])
+
+    k = gaussian_kde(np.vstack([x, y]))
+    zi = k(coords)
+    zi = zi.reshape(xi.shape) * (len(x) / 4 * 25)
+    
+    return zi, x, y, xi, yi, len(x)
