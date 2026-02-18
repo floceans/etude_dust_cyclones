@@ -4,28 +4,9 @@ from scipy.stats import gaussian_kde
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import sys
+from func import get_density, indice_global_cyclogenese
 
-def get_density(filename, yearmin, yearmax, xi, yi):
-    """Calcule la densité KDE pour un fichier et une période donnés sur une grille imposée."""
-    df = pd.read_csv(filename)
-    df['date'] = pd.to_datetime(df['date'])
-    
-    mask = (df['date'].dt.year >= yearmin) & (df['date'].dt.year <= yearmax)
-    df_f = df.loc[mask]
-    
-    if df_f.empty:
-        return np.zeros(xi.shape), 0
-    
-    x, y = df_f['lon'].values, df_f['lat'].values
-    
-    # Calcul KDE
-    k = gaussian_kde(np.vstack([x, y]))
-    zi = k(np.vstack([xi.flatten(), yi.flatten()]))
-    
-    # On normalise par le nombre de points pour que la différence soit comparable
-    # ou on garde le scaling original (ici conservé : nb_points / 4 * 25)
-    zi = zi.reshape(xi.shape) * (len(x) / 4 * 25)
-    return zi, len(x)
+
 
 def main():
     
@@ -41,15 +22,18 @@ def main():
 
     # --- Calcul des deux densités ---
     print(f"Calcul de la densité pour {file1}...")
-    zi1, n1 = get_density(file1, yearmin, yearmax, xi, yi)
+    zi1, _ = get_density(file1, yearmin, yearmax, xi, yi)
     
     print(f"Calcul de la densité pour {file2}...")
-    zi2, n2 = get_density(file2, yearmin, yearmax, xi, yi)
+    zi2, _ = get_density(file2, yearmin, yearmax, xi, yi)
 
     # --- Calcul de la DIFFÉRENCE ---
     # zi_diff > 0 : Plus de trajectoires dans le fichier 1
     # zi_diff < 0 : Plus de trajectoires dans le fichier 2
     zi_diff = zi1 - zi2
+
+    indice_global_cyclogenese_diff = indice_global_cyclogenese(zi_diff, lonmin, lonmax, latmin, latmax)
+    print(f"Indice global de cyclogenèse (différence) pour {file1} - {file2} : {indice_global_cyclogenese_diff:.2f}")
 
     # --- Plotting ---
     fig = plt.figure(figsize=(12, 8))

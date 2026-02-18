@@ -4,12 +4,11 @@ from scipy.stats import gaussian_kde
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import sys
+from func import fichier_source, indice_global_cyclogenese
 
-# fichier source
-def fichier_source(argv):
-    if len(argv) > 1 and argv[1] == 'ibtracs':
-        return 'ibtracs_transformed_1960_2024.csv'
-    return 'ALADIN_rel10_1960_2024.csv'
+    
+
+
 
 filename = fichier_source(sys.argv)
 
@@ -19,27 +18,19 @@ yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 2022
 lons = []
 lats = []
 
-# --- 2. Lecture manuelle du CSV (sans Pandas) ---
+# --- 2. Lecture manuelle du CSV ---
 print(f"--- Extraction des points de cyclogenèse (step=1) dans {filename} ---")
 
 with open(filename, mode='r', encoding='utf-8') as f:
-
     nbr = 0
     reader = csv.DictReader(f)
     for row in reader:
-        # Extraction de l'année depuis la date (format attendu YYYY-MM-DD...)
         year = int(row['date'][:4])
-        
-        # Filtrage : Année ET Cyclogenèse (step=1)
         if yearmin <= year <= yearmax and row['step'] == '1':
             nbr += 1
-            # On affiche la ligne correspondante
-            print(f"Cyclone {nbr} | Step: {row['step']} | Date: {row['date']} | Lon: {row['lon']} | Lat: {row['lat']}")
-            
             lons.append(float(row['lon']))
             lats.append(float(row['lat']))
 
-# Conversion en arrays numpy pour les calculs
 x = np.array(lons)
 y = np.array(lats)
 
@@ -56,9 +47,11 @@ coords = np.vstack([xi.flatten(), yi.flatten()])
 
 k = gaussian_kde(np.vstack([x, y]))
 zi = k(coords)
-
-# Mise à l'échelle
 zi = zi.reshape(xi.shape) * (len(x) / 4 * 25)
+
+indice = indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax)
+print(f"Indice global de cyclogenèse (step=1) pour {filename} : {indice:.2f} (nombre de points : {len(x)})")
+
 
 # --- 4. Plotting ---
 proj = ccrs.PlateCarree()
@@ -71,10 +64,18 @@ ax.set_title(f'Cyclogenesis Density (step=1) [{yearmin}-{yearmax}]', fontsize=12
 ax.set_extent([lonmin, lonmax, latmin, latmax], crs=proj)
 ax.coastlines(resolution='50m', color='black', linewidth=1)
 
-# Tracé
+# Tracé densité
 levels = np.linspace(0, zi.max(), 25)
-cf = ax.contourf(xi, yi, zi, levels=levels, cmap='turbo', transform=proj, extend='max')
-plt.colorbar(cf, orientation='horizontal', pad=0.1, label='Density Scale')
+cf = ax.contourf(xi, yi, zi, levels=levels, cmap='turbo', transform=proj, extend='max', alpha=0.8)
+
+cs = ax.contour(xi, yi, zi, levels=levels, colors='black', linewidths=0.5, alpha=0.4, transform=ccrs.PlateCarree())
+ax.clabel(cs, inline=True, fontsize=8, fmt='%1.1f')
+
+# Pts de cyclogenèse (prems de chaque cyclone)
+ax.scatter(x, y, color='black', marker='o', s=8, transform=proj, 
+           edgecolor='white', linewidth=0.2, zorder=5, label='Cyclogenesis points')
+
+plt.colorbar(cf, orientation='horizontal', pad=0.1, aspect=40, label='Density Scale')
 
 plt.tight_layout()
 plt.show()

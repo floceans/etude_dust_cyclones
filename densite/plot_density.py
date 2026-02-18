@@ -5,50 +5,24 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import sys
-import os
+from func import fichier_source, indice_global_cyclogenese, get_density
 
-# fichier source
-def fichier_source(argv):
-    if len(argv) > 1 and argv[1] == 'ibtracs':
-        return 'ibtracs_transformed_1960_2024.csv'
-    return 'ALADIN_rel10_1960_2024.csv'
 
 filename = fichier_source(sys.argv)
 
 yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 2018
 yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 2022 
 
-# --- 1. Chargement et filtrage des données ---
-df = pd.read_csv(filename)
-df['date'] = pd.to_datetime(df['date'])
 
-# Filtrage par années
-mask = (df['date'].dt.year >= yearmin) & (df['date'].dt.year <= yearmax)
-df_filtered = df.loc[mask]
-
-x = df_filtered['lon'].values
-y = df_filtered['lat'].values
-
-if len(x) < 10:
-    raise ValueError("Pas assez de points pour estimer une densité KDE")
-
-# --- 2. Calcul de la densité (KDE) ---
-# Paramètres du domaine pour la grille de calcul
-lonmin, lonmax = -105, 5
-latmin, latmax = 5, 35
-
-# Création de la grille
+lonmin, lonmax, latmin, latmax = -105, 5, 5, 35
 xi, yi = np.mgrid[lonmin:lonmax:200j, latmin:latmax:200j]
-coords = np.vstack([xi.flatten(), yi.flatten()])
 
-# Estimation KDE
-k = gaussian_kde(np.vstack([x, y]))
-zi = k(coords)
+zi, long_x = get_density(filename, yearmin, yearmax, xi, yi)
 
-# Facteur d'échelle (conservé selon votre formule originale)
-nech = len(x)
-coef = nech / 4 * 25
-zi = zi.reshape(xi.shape) * coef
+
+indice = indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax)
+print(f"Indice global de cyclogenèse (step=1) pour {filename} : {indice:.2f} (nombre de points : {long_x})")
+
 
 # --- 3. Plotting ---
 proj = ccrs.PlateCarree()
