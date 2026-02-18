@@ -5,15 +5,16 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import sys
 
-# --- 1. Paramètres et fonctions ---
-def get_filename(argv):
-    if len(argv) > 3 and argv[3] == 'ibtracs':
+# fichier source
+def fichier_source(argv):
+    if len(argv) > 1 and argv[1] == 'ibtracs':
         return 'ibtracs_transformed_1960_2024.csv'
     return 'ALADIN_rel10_1960_2024.csv'
 
-yearmin = int(sys.argv[1]) if len(sys.argv) > 1 else 2018
-yearmax = int(sys.argv[2]) if len(sys.argv) > 2 else 2022 
-filename = get_filename(sys.argv)
+filename = fichier_source(sys.argv)
+
+yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 2018
+yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 2022 
 
 lons = []
 lats = []

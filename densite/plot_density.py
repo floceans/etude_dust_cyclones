@@ -7,14 +7,16 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import sys
 import os
 
-# --- Configuration ---
-aladin = 'ALADIN_rel10_1960_2024.csv'
-ibtracs = 'ibtracs_transformed_1960_2024.csv'
+# fichier source
+def fichier_source(argv):
+    if len(argv) > 1 and argv[1] == 'ibtracs':
+        return 'ibtracs_transformed_1960_2024.csv'
+    return 'ALADIN_rel10_1960_2024.csv'
 
-filename = ibtracs  # Par défaut, on peut aussi choisir ibtracs
+filename = fichier_source(sys.argv)
 
-yearmin = int(sys.argv[1]) if len(sys.argv) > 1 else 2018
-yearmax = int(sys.argv[2]) if len(sys.argv) > 2 else 2022 
+yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 2018
+yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 2022 
 
 # --- 1. Chargement et filtrage des données ---
 df = pd.read_csv(filename)
