@@ -27,10 +27,10 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 # --- Gestion des args ---
 
 
-annee_debut = int(sys.argv[1]) if len(sys.argv) > 1 else 2015
+annee_debut = int(sys.argv[1]) if len(sys.argv) > 1 else 1962
 
 # Si len(sys.argv) > 2, on prend l'argument 2, sinon on met 1961 par défaut
-annee_fin = int(sys.argv[2]) if len(sys.argv) > 2 else 2020
+annee_fin = int(sys.argv[2]) if len(sys.argv) > 2 else 1963
 
 seuil_p = int(sys.argv[3]) if len(sys.argv) > 3 else 1010
 

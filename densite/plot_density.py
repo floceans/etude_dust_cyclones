@@ -10,14 +10,14 @@ from func import fichier_source, indice_global_cyclogenese, get_density
 
 filename = fichier_source(sys.argv)
 
-yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 2018
-yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 2022 
+yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 1962
+yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 1963 
 
 
 lonmin, lonmax, latmin, latmax = -105, 5, 5, 35
 xi, yi = np.mgrid[lonmin:lonmax:200j, latmin:latmax:200j]
 
-zi, long_x = get_density(filename, yearmin, yearmax, xi, yi)
+zi, x, y, long_x = get_density(filename, yearmin, yearmax, xi, yi)
 
 
 indice = indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax)

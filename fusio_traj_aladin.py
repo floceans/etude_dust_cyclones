@@ -13,7 +13,7 @@ with open(output_filename, 'w', encoding='utf-8') as outfile:
     for year in range(start_year, end_year + 1):
         # Construction du nom de fichier (ex: 1960-1961)
 
-        filename = f"/home/puyf/Documents/git/etude_dust_cyclones/trajectoires_1/traj2/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.{suffix}.csv"
+        filename = f"/home/florent/Documents/CNRM/git/etude_dust_cyclones/trajectoires/traj_3/suiERA5_evaluation_{year}-{year+1}.vor5_res17_1_-2_5.{suffix}.csv"
         
         if os.path.exists(filename):
             print(f"Traitement de : {filename}...")

@@ -2,15 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import sys
-from func import fichier_source, indice_global_cyclogenese, get_density_cyclogenese
+from func import fichier_source, indice_global_cyclogenese, get_density_cyclogenese_aladin, get_density_cyclogenese_ibtracs
 
 
-AN_MIN = 2018
-AN_MAX = 2022
-SVORT = 1#10,25, 100 à tester selon Fabrice
+AN_MIN = 1961
+AN_MAX = 1961
+SVORT = 1 #10,25, 100 à tester selon Fabrice
 
 ## fichiers source & args
-filename = fichier_source(sys.argv)
+filename = fichier_source(sys.argv, default='aladin')
 
 yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else AN_MIN
 yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else AN_MAX 
@@ -21,10 +21,16 @@ seuil_vort = int(sys.argv[4]) if len(sys.argv) > 4 else SVORT #seuil de vorticit
 lonmin, lonmax = -105, 5
 latmin, latmax = 5, 35
 
-zi, x,y, xi, yi, npts = get_density_cyclogenese(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vort)
+if filename == 'ALADIN_rel10_1960_2024.csv':
+    zi, x,y, xi, yi, npts = get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vort)
+elif filename == 'ibtracs_transformed_1960_2024.csv':
+    zi, x,y, xi, yi, npts = get_density_cyclogenese_ibtracs(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax)
+else:
+    print(f"Fichier source non reconnu : {filename}. Utilisez 'aladin' ou 'ibtracs' en argument.")
+
 
 indice = indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax)
-print(f"Indice global de cyclogenèse (step=1) pour {filename} : {indice:.2f} (nombre de points : {npts})")
+print(f"Indice global de cyclogenèse pour {filename} : {indice:.2f} (nombre de points : {npts})")
 print(f"Années couvertes : {yearmin} à {yearmax}")
 
 
