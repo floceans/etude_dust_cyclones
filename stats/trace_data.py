@@ -1,4 +1,4 @@
-from fonc import plot_relation, load_data, plot_bar_charts
+from fonc import plot_relation, load_data, plot_bar_charts, plot_vmax_pmin_time
 
 DATA = 'ibtracs' #'aladin' 
 
@@ -23,7 +23,9 @@ else:
     plot_relation(pmin, vmax, "Pression Minimale (hPa)", "Vitesse Vent (vmax)", DATA)
     
     # 3. Relation Vorticité / Vmax
-    plot_relation(vomax, vmax, "Vorticité (vomax)", "Vitesse Vent (vmax)", DATA)
+    #plot_relation(vomax, vmax, "Vorticité (vomax)", "Vitesse Vent (vmax)", DATA)
     
     # 4. Relation Vorticité / Pmin
-    plot_relation(vomax, pmin, "Vorticité (vomax)", "Pression Minimale (hPa)", DATA)
+    #plot_relation(vomax, pmin, "Vorticité (vomax)", "Pression Minimale (hPa)", DATA)
+
+    plot_vmax_pmin_time(filename, an_min=2020, an_max=2020)

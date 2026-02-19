@@ -1,5 +1,6 @@
 import csv
 import matplotlib.pyplot as plt
+from datetime import datetime
 
 
 def calculate_regression(x, y):
@@ -86,4 +87,81 @@ def plot_relation(x, y, label_x, label_y, filename):
     plt.title(f"Relation {label_x} vs {label_y} pour data {filename}")
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
+    plt.show()
+
+
+
+def plot_vmax_pmin_time(filename, an_min, an_max):
+    """Trace l'évolution de Vmax et Pmin en reliant les points par cyclone."""
+    
+    # On utilise un dictionnaire pour grouper les points par identifiant de cyclone (numtc)
+    cyclones = {}
+
+    with open(filename, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                pmin_val = row['pmin']
+                vmax_val = row['vmax']
+               # vomax_val = row.get('vomax', '0')
+                date_raw = row['date']
+                numtc = row['numtc'] # L'identifiant unique du cyclone
+                year = int(date_raw[:4])
+
+                # Filtres demandés
+                if pmin_val and vmax_val and (an_min <= year <= an_max) : #and float(vomax_val) != 0:
+                    if numtc not in cyclones:
+                        cyclones[numtc] = {'dates': [], 'vmax': [], 'pmin': []}
+                    
+                    dt = datetime.strptime(date_raw, '%Y-%m-%d %H:%M:%S')
+                    cyclones[numtc]['dates'].append(dt)
+                    cyclones[numtc]['vmax'].append(float(vmax_val))
+                    cyclones[numtc]['pmin'].append(float(pmin_val))
+            except (ValueError, KeyError):
+                continue
+
+    if not cyclones:
+        print(f"Aucune donnée pour {an_min}-{an_max} avec les filtres (pmin présent & vomax != 0).")
+        return
+
+    fig, ax1 = plt.subplots(figsize=(14, 8))
+    ax2 = ax1.twinx()
+
+    # Paramètres esthétiques
+    color_vmax = 'tab:blue'
+    color_pmin = 'tab:red'
+
+    # On trace chaque cyclone séparément
+    first_label = True
+    for tc_id, data in cyclones.items():
+        # Tri chronologique pour chaque cyclone pour éviter les retours en arrière
+        combined = sorted(zip(data['dates'], data['vmax'], data['pmin']))
+        d_sort, v_sort, p_sort = zip(*combined)
+
+        # On n'affiche la légende qu'une seule fois pour ne pas surcharger
+        lbl_v = 'Vmax (Vent)' if first_label else ""
+        lbl_p = 'Pmin (Pression)' if first_label else ""
+
+        # Tracé des lignes (interpolation linéaire simple "point à point")
+        ax1.plot(d_sort, v_sort, color=color_vmax, alpha=0.6, linewidth=1.2, label=lbl_v)
+        ax2.plot(d_sort, p_sort, color=color_pmin, alpha=0.6, linewidth=1.2, label=lbl_p)
+        first_label = False
+
+    # Configuration des axes
+    ax1.set_xlabel('Temps')
+    ax1.set_ylabel('Vmax (m/s)', color=color_vmax, fontweight='bold')
+    ax1.tick_params(axis='y', labelcolor=color_vmax)
+    
+    ax2.set_ylabel('Pmin (hPa)', color=color_pmin, fontweight='bold')
+    ax2.tick_params(axis='y', labelcolor=color_pmin)
+    ax2.invert_yaxis() # Convention : pression basse en haut (intensité max)
+
+    # Légendes fusionnées
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+
+    plt.title(f"Trajectoires d'intensité des cyclones ({an_min} - {an_max})\nLignes par cyclone individuel (Filtre: Vomax ≠ 0)")
+    plt.grid(True, alpha=0.2)
+    fig.tight_layout()
     plt.show()
