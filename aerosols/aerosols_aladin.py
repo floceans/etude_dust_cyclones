@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from func import load_data, print_stats, plot_aod_map, plot_time_series, plot_histogram
 
 # --- CONFIGURATION ---
-FILE_PATH = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/aerosols/od550dust_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM-ALADIN64C1_v1-r1_mon_202101-202312.nc"
+FILE_PATH = "/home/puyf/Documents/dust_brut_1/od550dust_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM-ALADIN64C1_v1-r1_mon_202101-202312.nc"
 
 # On peut spécifier la variable si on veut être précis
 VAR_AOD = "od550dust"

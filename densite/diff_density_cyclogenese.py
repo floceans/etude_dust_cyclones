@@ -10,9 +10,9 @@ from func import get_density_cyclogenese_aladin, get_density_cyclogenese_ibtracs
 
 def main():
 
-    AN_MIN = 2018
-    AN_MAX = 2022
-    SVORT = 1
+    AN_MIN = 1960
+    AN_MAX = 2024
+    SVORT = 10
     
     file1 = 'ALADIN_rel10_1960_2024.csv'
     file2 = 'ibtracs_transformed_1960_2024.csv'

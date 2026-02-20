@@ -24,8 +24,8 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 ###
 
 data = 'aladin'
-yearmin = 1962
-yearmax = 2024
+yearmin = 2018
+yearmax = 2022
 seuil_p = 1010
 
 
@@ -35,7 +35,7 @@ if len(sys.argv) > 1 and sys.argv[1] == 'aladin':
 elif len(sys.argv) > 1 and sys.argv[1] == 'ibtracks':
     filename = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/ibtracs_transformed_1960_2024.csv" 
 elif data == 'aladin':
-    filename = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/ALADIN_rel10_1960_2024_old.csv"
+    filename = "ALADIN_rel10_1960_2024.csv"
 elif data == 'ibtracks':
     filename = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/ibtracs_transformed_1960_2024.csv"
 else:
@@ -50,8 +50,8 @@ annee_fin = int(sys.argv[3]) if len(sys.argv) > 3 else yearmax
 seuil_p = int(sys.argv[4]) if len(sys.argv) > 4 else seuil_p
 
 # Zone Atlantique Nord pour le filtrage (activable au besoin)
-ATLANTIC_LON_MIN, ATLANTIC_LON_MAX = -88.0, -27.0
-ATLANTIC_LAT_MIN, ATLANTIC_LAT_MAX = 8.0, 35.0
+ATLANTIC_LON_MIN, ATLANTIC_LON_MAX = -95.0, -10.0
+ATLANTIC_LAT_MIN, ATLANTIC_LAT_MAX = 5.0, 35.0
 
 def is_in_atlantic(lon, lat):
     # Pour activer le filtre, décommente la ligne ci-dessous
@@ -110,7 +110,7 @@ if not final_tracks:
 # --- Création de la carte ---
 fig = plt.figure(figsize=(15, 8))
 ax = plt.axes(projection=ccrs.PlateCarree())
-ax.set_extent([-100, 10, 0, 45], crs=ccrs.PlateCarree()) 
+ax.set_extent([ATLANTIC_LON_MIN, ATLANTIC_LON_MAX, ATLANTIC_LAT_MIN, ATLANTIC_LAT_MAX], crs=ccrs.PlateCarree()) 
 
 ax.stock_img()
 ax.coastlines(resolution='50m', color='black', linewidth=1)

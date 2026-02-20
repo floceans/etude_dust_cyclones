@@ -6,11 +6,11 @@ from func import fichier_source, indice_global_cyclogenese, get_density_cyclogen
 
 
 AN_MIN = 1961
-AN_MAX = 1961
+AN_MAX = 2024
 SVORT = 1 #10,25, 100 à tester selon Fabrice
 
 ## fichiers source & args
-filename = fichier_source(sys.argv, default='aladin')
+filename = fichier_source(sys.argv, default='ibtracs')
 
 yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else AN_MIN
 yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else AN_MAX 

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from func import load_data, print_stats, plot_aod_map, plot_time_series, plot_histogram
 
 # --- CONFIGURATION ---
-FILE_PATH = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/aerosols/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc"
+FILE_PATH = "/home/puyf/Documents/git/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc"
 
 
 
