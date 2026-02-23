@@ -6,14 +6,14 @@ import sys
 
 
 # fichier source
-def fichier_source(argv, default='aladin'):
+def fichier_source(argv, file):
     if len(argv) > 1 and argv[1] == 'ibtracs':
         return 'ibtracs_transformed_1960_2024.csv'
     elif len(argv) > 1 and argv[1] == 'aladin':
         return 'ALADIN_rel10_1960_2024.csv'
-    elif default == 'aladin':
+    elif file == 'aladin' :
         return 'ALADIN_rel10_1960_2024.csv'
-    else:
+    elif file == 'ibtracs' :
         return 'ibtracs_transformed_1960_2024.csv'
 
 

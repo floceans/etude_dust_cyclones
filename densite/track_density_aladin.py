@@ -13,7 +13,7 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 year_min = int(sys.argv[1]) if len(sys.argv) > 1 else 2018
 year_max = int(sys.argv[2]) if len(sys.argv) > 2 else 2022
 
-dir_path = '/home/florent/Documents/CNRM/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv' # Dossier contenant les fichiers .csv
+dir_path = 'trac_3/' # Dossier contenant les fichiers .csv
 output_dir = 'images'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)

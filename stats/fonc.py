@@ -56,17 +56,25 @@ def plot_bar_charts(vmax, pmin, vomax, filename):
     if not vmax: return
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
     
+    # Premier subplot
     axs[0].hist(vmax, bins=30, color='skyblue', edgecolor='black')
     axs[0].set_title("Distribution Vmax")
-    
+    axs[0].set_xlim(0, 100)
+    #axs[0].set_ylim(0, 1800)
+
+    # Deuxième subplot
     axs[1].hist(pmin, bins=30, color='salmon', edgecolor='black')
     axs[1].set_title("Distribution Pmin")
-    
+    axs[1].set_xlim(800, 1020)
+    #axs[1].set_ylim(0, 2600)
+
+    # Troisième subplot
     axs[2].hist(vomax, bins=30, color='lightgreen', edgecolor='black')
     axs[2].set_title("Distribution Vomax")
-    
+    axs[2].set_xlim(0, 500)
+    #axs[2].set_ylim(0, 2600)
+
     plt.tight_layout()
-    plt.title(f"Distributions des Variables pour data {filename}")
     plt.show()
 
 def plot_relation(x, y, label_x, label_y, filename):
@@ -81,13 +89,15 @@ def plot_relation(x, y, label_x, label_y, filename):
     a, b = calculate_regression(x, y)
     if a is not None:
         # Création de la ligne de régression
-        x_reg = [min(x), max(x)]
+        x_reg = [min(x), max(x)+20]
         y_reg = [a * xi + b for xi in x_reg]
         plt.plot(x_reg, y_reg, color='red', linewidth=2, label=f"Régression: y={a:.2f}x+{b:.2f}")
     
     plt.xlabel(label_x)
     plt.ylabel(label_y)
     plt.title(f"Relation {label_x} vs {label_y} pour data {filename}")
+    plt.xlim(880, 1030)
+    plt.ylim(0, 100)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.show()

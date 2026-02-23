@@ -8,10 +8,16 @@ import sys
 from func import fichier_source, indice_global_cyclogenese, get_density
 
 
-filename = fichier_source(sys.argv)
 
-yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 1962
-yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 1963 
+file = 'aladin'
+
+filename = fichier_source(sys.argv if len(sys.argv)>0 else None, file)
+
+print(filename)
+
+
+yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else 1960
+yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else 2024
 
 
 lonmin, lonmax, latmin, latmax = -105, 5, 5, 35
