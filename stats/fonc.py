@@ -23,7 +23,7 @@ def calculate_regression(x, y):
     # Calcul simplifié du coefficient de corrélation R (optionnel pour le titre)
     return a, b
 
-def load_data(filename):
+def load_data(filename, svort):
     """Charge et filtre les données sans pandas."""
     vmax_list, pmin_list, vomax_list = [], [], []
     
@@ -40,9 +40,12 @@ def load_data(filename):
                 # 1. Si pmin est absent (vide), on ignore la ligne.
                 # 2. Si vomax est égal à 0, on ignore la ligne.
                 if pmin is not None and vomax is not None : #and vomax != 0:
-                    vmax_list.append(vmax)
-                    pmin_list.append(pmin)
-                    vomax_list.append(vomax)
+                    print(svort)
+                    if vomax >= svort :
+                        print("vomaaax = ", vomax)
+                        vmax_list.append(vmax)
+                        pmin_list.append(pmin)
+                        vomax_list.append(vomax)
             except ValueError:
                 continue # Ignore les lignes mal formées
                 

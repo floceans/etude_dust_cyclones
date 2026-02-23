@@ -1,13 +1,21 @@
 from fonc import plot_relation, load_data, plot_bar_charts, plot_vmax_pmin_time
 
-DATA = 'ibtracs' #'aladin' 
+DATA = 'aladin' #'aladin' 
+SEUIL_VORTICITE = 65
+
 
 if DATA == 'ibtracs':
-    filename = '/home/florent/Documents/CNRM/git/etude_dust_cyclones/ibtracs_transformed_1960_2024.csv'
+    filename = 'ibtracs_transformed_1960_2024.csv'
+    svort = 0
 elif DATA == 'aladin':
-    filename = '/home/florent/Documents/CNRM/git/etude_dust_cyclones/aladin_transformed_1960_2024.csv'
+    svort = SEUIL_VORTICITE
+    filename = 'ALADIN_rel10_1960_2024.csv'
 
-vmax, pmin, vomax = load_data(filename)
+
+###################PRENDRE EN COMPTE SEUIL VORT #########################
+
+
+vmax, pmin, vomax = load_data(filename, svort)
 
 print(f"Nombre de données valides : {len(vmax)}")
 print(f"nbr pmin valides : {len(pmin)}")

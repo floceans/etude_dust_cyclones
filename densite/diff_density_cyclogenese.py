@@ -12,7 +12,7 @@ def main():
 
     AN_MIN = 1960
     AN_MAX = 2024
-    SVORT = 10
+    SVORT = 65
     
     file1 = 'ALADIN_rel10_1960_2024.csv'
     file2 = 'ibtracs_transformed_1960_2024.csv'

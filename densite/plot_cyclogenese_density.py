@@ -7,7 +7,7 @@ from func import fichier_source, indice_global_cyclogenese, get_density_cyclogen
 
 AN_MIN = 1961
 AN_MAX = 2024
-SVORT = 1 #10,25, 100 à tester selon Fabrice
+SVORT = 65 #10,25, 100 à tester selon Fabrice
 
 ## fichiers source & args
 filename = fichier_source(sys.argv, default='ibtracs')
