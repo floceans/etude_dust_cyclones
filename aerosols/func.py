@@ -107,6 +107,7 @@ def plot_time_series(da, filename):
     else:
         da.mean(dim=["lat", "lon"]).plot(color='#d95f02', linewidth=1.5)
     plt.title(f"Série temporelle AOD (Moyenne zone Atlantique - {filename})", fontweight='bold')
+    plt.ylim(0,0.35)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
@@ -118,4 +119,6 @@ def plot_histogram(da, filename):
     plt.hist(vals[~np.isnan(vals)], bins=100, color='#e6ab02', alpha=0.7)
     plt.title(f"Distribution de l'AOD ({filename})", fontweight='bold')
     plt.yscale('log')
+    plt.xlim(0,1.8)
+
     plt.tight_layout()
