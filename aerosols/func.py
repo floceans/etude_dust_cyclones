@@ -22,22 +22,26 @@ def mask_atlantic(da):
     # On identifie les noms réels des coordonnées de latitude et longitude
     # Dans ton fichier ALADIN, c'est probablement 'lat' et 'lon' (ou 'latitude'/'longitude')
     # On crée un masque booléen 2D
+    
     mask = (da.lat >= lat_min) & (da.lat <= lat_max) & (da.lon >= lon_min) & (da.lon <= lon_max)
     
     # .where(mask, drop=True) masque les valeurs hors zone ET 
     # réduit les dimensions x et y au plus petit rectangle englobant.
+
+    
     da_masked = da.where(mask, drop=True)
     
     return da_masked
 
-def load_data(path, var_name=None):
+def load_data(path, var_name):
     """Charge le dataset et gère les coordonnées 2D d'ALADIN."""
     ds = xr.open_dataset(path)
     
     if var_name is None:
         var_name = list(ds.data_vars)[0]
     da = ds[var_name]
-    
+
+
     # 1. Correction des longitudes (0-360 -> -180-180) AVANT le masque
     if da.lon.max() > 180:
         # Pour les grilles 2D, on modifie les valeurs directement
@@ -45,11 +49,12 @@ def load_data(path, var_name=None):
         da = da.assign_coords(lon=new_lon)
     
     # 2. Application du masque spécifique 2D
+
     aod_masked = mask_atlantic(da)
     
     # 3. Application du masque temporel
-    aod_masked = mask_time(aod_masked)
-    
+    aod_masked = mask_time(aod_masked, 2007, 2009)
+
     return aod_masked
 
 def print_stats(da, filename):
@@ -82,7 +87,7 @@ def plot_aod_map(da, filename):
     )
 
     ax.add_feature(cfeature.COASTLINE, linewidth=0.8, zorder=3)
-    ax.add_feature(cfeature.LAND, facecolor='#f0f0f0', zorder=2)
+    #ax.add_feature(cfeature.LAND, facecolor='#f0f0f0', zorder=2)
     
     # Définition auto des limites basées sur les données masquées
     lon_min, lon_max = da.lon.min().item(), da.lon.max().item()
@@ -98,11 +103,13 @@ def plot_aod_map(da, filename):
 
 def plot_time_series(da, filename):
     """Série temporelle sur les dimensions x, y."""
-    if "time" not in da.dims: return
+
+    if "time" not in da.dims: 
+        return
     
     plt.figure(figsize=(12, 4))
-    # Moyenne spatiale sur les dimensions x et y (et non lat/lon)
-    if filename == 'aladin':
+    # Moyenne spatiale sur x et y ou lat/lon selon nc
+    if filename == 'aladin_dust' or filename == 'aladin_aer':
         da.mean(dim=["x", "y"]).plot(color='#d95f02', linewidth=1.5)
     else:
         da.mean(dim=["lat", "lon"]).plot(color='#d95f02', linewidth=1.5)
