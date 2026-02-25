@@ -17,31 +17,5 @@ plt.title("Différence d'intensité cyclogénèse (ALADIN - IBTRACS) selon seuil
 plt.xlabel('seuil vorticité')
 plt.ylabel('\Delta intensité cyclogénèse')
 plt.legend()
-#plt.show()
-
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib import cm
-from numpy import random
-from scipy import stats
-
-Nsample = 5000
-xx = random.normal(size=Nsample)
-yy = random.normal(size=Nsample)
-
-kde = stats.gaussian_kde([xx,yy])
-zz = kde([xx,yy])
-zz.min(),zz.max()
-
-cc = cm.jet((zz-zz.min())/(zz.max()-zz.min()))
-cc.min(),cc.max()
-
-fig = plt.figure(figsize=(4.3,4))
-ax = plt.subplot(1,1,1)
-ax.scatter(xx,yy,marker='o',facecolors=cc,s=1)
-ax.set_aspect('equal','datalim')
-
-
-plt.colorbar()
-
 plt.show()
+
