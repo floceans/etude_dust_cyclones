@@ -118,6 +118,35 @@ def plot_time_series(da, filename):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
+def plot_time_series_multi(da, filename):
+    """
+    Ajoute une courbe au graphique actuel. 
+    Note : plt.figure() doit être appelé AVANT d'utiliser cette fonction.
+    """
+    if "time" not in da.dims: 
+        print(f"Erreur : pas de dimension 'time' dans {filename}")
+        return
+    
+    # 1. Sélection automatique des dimensions spatiales selon le nom du fichier
+    if filename in ['aladin_dust', 'aladin_aer']:
+        dims_to_mean = ["x", "y"]
+    else:
+        dims_to_mean = ["lat", "lon"]
+        
+    # 2. Tracé de la moyenne spatiale
+    # On utilise 'label' pour que la légende s'affiche correctement
+    # On ne fixe pas la couleur pour que Matplotlib change de couleur à chaque appel
+    da.mean(dim=dims_to_mean).plot(label=filename, linewidth=1.5)
+    
+    # 3. Configuration du graphique (écrasée à chaque appel, donc seule la dernière compte)
+    plt.title("Séries temporelles AOD (Moyenne zone Atlantique)", fontweight='bold')
+    plt.ylim(0, 0.35)
+    plt.grid(True, alpha=0.3)
+    
+    # 4. Activation de la légende
+    plt.legend()
+    plt.tight_layout()
+
 def plot_histogram(da, filename):
     """Histogramme des valeurs non-NaN."""
     plt.figure(figsize=(8, 4))

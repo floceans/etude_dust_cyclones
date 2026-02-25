@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from func import load_data, print_stats, plot_aod_map, plot_time_series, plot_histogram
+from func import load_data, print_stats, plot_aod_map, plot_time_series, plot_time_series_multi, plot_histogram
 
 data = 'aladin_aer'  #modis aladin
 
@@ -38,7 +38,9 @@ if __name__ == "__main__":
     plot_time_series(aod_data, data)
 
     aod_data_1 = load_data('/home/puyf/Documents/dust_brut_1/merra/AOT_MERRA2_198001-202012.nc', "DUEXTTAU")
-    plot_time_series(aod_data_1, "merra")
+    plot_time_series_multi(aod_data_1, "merra")
+    plot_time_series_multi(aod_data, data)
+
     # Histogramme
     #plot_histogram(aod_data, data)
     
