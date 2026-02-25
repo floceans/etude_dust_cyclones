@@ -1,7 +1,7 @@
 from fonc import plot_relation, load_data, plot_bar_charts, plot_vmax_pmin_time
 
 DATA = 'aladin' #'aladin' 
-SEUIL_VORTICITE = 65
+SEUIL_VORTICITE = 70
 
 
 if DATA == 'ibtracs':

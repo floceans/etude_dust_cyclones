@@ -53,7 +53,7 @@ def load_data(path, var_name):
     aod_masked = mask_atlantic(da)
     
     # 3. Application du masque temporel
-    aod_masked = mask_time(aod_masked, 2007, 2009)
+    aod_masked = mask_time(aod_masked, 2002, 2010)
 
     return aod_masked
 

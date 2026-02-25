@@ -9,8 +9,12 @@ AN_MIN = 1961
 AN_MAX = 2024
 SVORT = 65 #10,25, 100 à tester selon Fabrice
 
+file = 'ibtracs'
+
 ## fichiers source & args
-filename = fichier_source(sys.argv, default='ibtracs')
+filename = fichier_source(sys.argv, file)
+
+print(filename)
 
 yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else AN_MIN
 yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else AN_MAX 
@@ -57,6 +61,5 @@ ax.scatter(x, y, color='black', marker='o', s=8, transform=proj,
            edgecolor='white', linewidth=0.2, zorder=5, label='Cyclogenesis points')
 
 plt.colorbar(cf, orientation='horizontal', pad=0.1, aspect=40, label='Density Scale')
-
 plt.tight_layout()
 plt.show()

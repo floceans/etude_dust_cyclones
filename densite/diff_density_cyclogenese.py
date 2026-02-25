@@ -12,7 +12,7 @@ def main():
 
     AN_MIN = 1960
     AN_MAX = 2024
-    SVORT = 65
+    SVORT = 100
     
     file1 = 'ALADIN_rel10_1960_2024.csv'
     file2 = 'ibtracs_transformed_1960_2024.csv'
@@ -22,7 +22,7 @@ def main():
     seuil_vort = int(sys.argv[3]) if len(sys.argv) > 3 else SVORT #seuil de vort 
 
     # config grille pr deux densités
-    lonmin, lonmax, latmin, latmax = -105, 5, 5, 35
+    lonmin, lonmax, latmin, latmax = -60, -15, 5, 20 #-105, 5, 5, 35 pr tt domaine
 
     # calcul densités
     print(f"Calcul de la densité pour {file1}...")

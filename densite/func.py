@@ -122,6 +122,13 @@ def get_density_cyclogenese_ibtracs(filename, yearmin, yearmax, lonmin, lonmax, 
 
     k = gaussian_kde(np.vstack([x, y]))
     zi = k(coords)
-    zi = zi.reshape(xi.shape) * (len(x) / 4 * 25)
+
+    coef = len(x) / 4 * 25
+
+    print('##################################')
+    print(coef)
+
+    zi = zi.reshape(xi.shape) * coef
+
     
     return zi, x, y, xi, yi, len(x)
