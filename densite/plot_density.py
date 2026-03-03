@@ -9,9 +9,9 @@ from func import fichier_source, indice_global_cyclogenese, get_density
 
 
 
-file = 'aladin'
-yearmin = 2018
-yearmax = 2022
+file = 'ibtracs'
+yearmin = 1960
+yearmax = 2024
 
 filename = fichier_source(sys.argv if len(sys.argv)>0 else None, file)
 
@@ -48,7 +48,7 @@ ax.set_extent([lonmin, lonmax, latmin, latmax], crs=proj)
 ax.coastlines(resolution='50m', color='black', linewidth=1)
 
 # Tracé de la densité avec la colormap 'turbo'
-levels = np.linspace(0, 25, 25)
+levels = np.linspace(0, 300, 20)
 cf = ax.contourf(xi, yi, zi, levels=levels, cmap='turbo', transform=proj, extend='max')
 
 cs = ax.contour(xi, yi, zi, levels=levels, colors='black', linewidths=0.5, alpha=0.4, transform=ccrs.PlateCarree())

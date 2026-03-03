@@ -33,7 +33,7 @@ def mask_atlantic(da):
     
     return da_masked
 
-def load_data(path, var_name):
+def load_data(path, var_name, an_min, an_max):
     """Charge le dataset et gère les coordonnées 2D d'ALADIN."""
     ds = xr.open_dataset(path)
     
@@ -53,7 +53,7 @@ def load_data(path, var_name):
     aod_masked = mask_atlantic(da)
     
     # 3. Application du masque temporel
-    aod_masked = mask_time(aod_masked, 2002, 2010)
+    aod_masked = mask_time(aod_masked, an_min, an_max)
 
     return aod_masked
 

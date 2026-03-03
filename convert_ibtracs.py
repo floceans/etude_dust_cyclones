@@ -1,53 +1,87 @@
-import pandas as pd
-import numpy as np
+import csv
+from datetime import datetime
+
+
+def temps_6h(iso_time):
+    # Vérifie si l'heure est à 00:00, 06:00, 12:00 ou 18:00
+    return iso_time.hour in [0, 6, 12, 18]
+
 
 def convert_ibtracs_to_suiera5(input_file, output_file):
-    # 1. Chargement des données
-    # On saute la 2ème ligne (index 1) qui contient les unités dans IBTrACS
-    df = pd.read_csv(input_file, skiprows=[1], low_memory=False)
-
-    # 2. Nettoyage et tri
-    # On s'assure que le temps est au format datetime pour le tri
-    df['ISO_TIME'] = pd.to_datetime(df['ISO_TIME'])
-    df = df.sort_values(['SID', 'ISO_TIME'])
-
-    # 3. Création des identifiants (numtc et step)
-    # numtc : Numéro unique par tempête (basé sur le SID)
-    df['numtc'] = pd.factorize(df['SID'])[0] + 1
+    data = []
     
-    # step : Étape temporelle au sein de chaque tempête
-    df['step'] = df.groupby('SID').cumcount() + 1
+    with open(input_file, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        # On ignore la deuxième ligne (celle des unités)
+        next(reader)
+        
+        for row in reader:
+            try:
+                # 1. Extraction et conversion des données de base
+                sid = row['SID']
+                iso_time = datetime.strptime(row['ISO_TIME'], '%Y-%m-%d %H:%M:%S')
+                
+                # Gestion des valeurs numériques (conversion sécurisée)
+                usa_wind = float(row['USA_WIND']) if row['USA_WIND'].strip() else 0.0
+                usa_pres = float(row['USA_PRES']) if row['USA_PRES'].strip() else 0.0
+                lat = float(row['LAT']) if row['LAT'].strip() else 0.0
+                lon = float(row['LON']) if row['LON'].strip() else 0.0
+                
+                # 2. Calcul de vmax et filtrage (vmax > 17 m/s)
+                # Formule : (WIND en kts * 0.514444) / 1.12
+                vmax = (usa_wind * 0.514444) / 1.12
 
-    # 4. Conversion des variables numériques
-    # On convertit en numérique et on gère les valeurs manquantes (espaces)
-    df['LAT'] = pd.to_numeric(df['LAT'], errors='coerce')
-    df['LON'] = pd.to_numeric(df['LON'], errors='coerce')
-    df['USA_WIND'] = pd.to_numeric(df['USA_WIND'], errors='coerce')
-    df['USA_PRES'] = pd.to_numeric(df['USA_PRES'], errors='coerce')
+                
+                if vmax > 17 and temps_6h(iso_time):
+                    data.append({
+                        'SID': sid,
+                        'ISO_TIME': iso_time,
+                        'lat': lat,
+                        'lon': lon,
+                        'vmax': vmax,
+                        'pmin': usa_pres
+                    })
+            except (ValueError, KeyError):
+                # Ignore les lignes mal formées ou avec des données manquantes critiques
+                continue
 
-    # 5. Mapping vers le format suiERA5
-    output_df = pd.DataFrame()
-    output_df['numtc'] = df['numtc']
-    output_df['step'] = df['step']
-    output_df['date'] = df['ISO_TIME'].dt.strftime('%Y-%m-%d %H:%M:%S')
-    output_df['lon'] = df['LON']
-    output_df['lat'] = df['LAT']
-    
-    # vomax n'existe pas dans IBTrACS, on met 0.0
-    output_df['vomax'] = 0.0
-    
-    # vmax : Conversion kts -> m/s (si USA_WIND est présent)
-    output_df['vmax'] = df['USA_WIND'] * 0.514444 /1.12 # pour convertir frequence mesure 
-    
-    # pmin : Pression minimale
-    output_df['pmin'] = df['USA_PRES']
-    
-    # oprel : Toujours 1 selon votre consigne
-    output_df['oprel'] = 1
+    # 3. Tri des données par SID puis par Temps
+    data.sort(key=lambda x: (x['SID'], x['ISO_TIME']))
 
-    # 6. Exportation
-    output_df.to_csv(output_file, index=False)
-    print(f"Conversion terminée. Fichier sauvegardé sous : {output_file}")
+    # 4. Génération des numtc et step + Écriture du fichier
+    fieldnames = ['numtc', 'step', 'date', 'lon', 'lat', 'vomax', 'vmax', 'pmin', 'oprel']
+    
+    with open(output_file, mode='w', encoding='utf-8', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        current_sid = None
+        numtc = 0
+        step = 0
+        
+        for entry in data:
+            # Gestion du changement de tempête pour numtc et step
+            if entry['SID'] != current_sid:
+                current_sid = entry['SID']
+                numtc += 1
+                step = 1
+            else:
+                step += 1
+            
+            writer.writerow({
+                'numtc': numtc,
+                'step': step,
+                'date': entry['ISO_TIME'].strftime('%Y-%m-%d %H:%M:%S'),
+                'lon': entry['lon'],
+                'lat': entry['lat'],
+                'vomax': 0.0,
+                'vmax': round(entry['vmax'], 4),
+                'pmin': entry['pmin'],
+                'oprel': 1
+            })
+
+    print(f"Conversion terminée. {len(data)} lignes traitées.")
+    print(f"Fichier sauvegardé sous : {output_file}")
 
 # Utilisation
 input_filename = 'ibtracs.NA.list.v04r01_1960-2024.csv'
