@@ -40,9 +40,7 @@ def load_data(filename, svort):
                 # 1. Si pmin est absent (vide), on ignore la ligne.
                 # 2. Si vomax est égal à 0, on ignore la ligne.
                 if pmin is not None and vomax is not None : #and vomax != 0:
-                    print(svort)
                     if vomax >= svort :
-                        print("vomaaax = ", vomax)
                         vmax_list.append(vmax)
                         pmin_list.append(pmin)
                         vomax_list.append(vomax)

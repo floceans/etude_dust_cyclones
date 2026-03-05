@@ -1,21 +1,57 @@
-import matplotlib.pyplot as plt
+import csv
 import numpy as np
-from scipy.stats import gaussian_kde
+import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
 
-val_indices_tt_domaine = [907,907,894,848,821,747,708,687,670,654,651,649,661,683,743,796,935]
+# 1. Lecture du fichier sans pandas
+vent = []
+vort = []
+rmse = []
 
-val_vorti_tt_domaine = [1,10,15,25,30,40,45,50,55,60,62.5,65,67.5,70,80,90,100]
+with open('resultats_cyclogenese.txt', 'r') as f:
+    reader = csv.reader(f)
+    next(reader)  # Sauter l'en-tête
+    for row in reader:
+        vort.append(float(row[0]))
+        vent.append(float(row[1]))
+        rmse.append(float(row[2]))
 
+# Conversion en tableaux numpy
+x = np.array(vent)
+y = np.array(vort)
+z = np.array(rmse)/(200*200)
 
-val_vorti_mdr = [0,10,15,20,25,35,45,55,65,67.5,70,72.5,75,80,85,95,100]
+# 2. Création d'une grille régulière pour le lissage (interpolation)
+xi = np.linspace(x.min(), x.max(), 100)
+yi = np.linspace(y.min(), y.max(), 100)
+xi, yi = np.meshgrid(xi, yi)
 
-val_indice_mdr = [801,801,810,814,835,831,792,783,771,767,757,762,765,771,791,796,796]
+# Interpolation des valeurs de RMSE sur la grille
+zi = griddata((x, y), z, (xi, yi), method='cubic')
 
-plt.plot(val_vorti_tt_domaine, val_indices_tt_domaine, label = 'Tout domaine')
-plt.plot(val_vorti_mdr, val_indice_mdr, label = 'Domaine MDR')
-plt.title("Différence d'intensité cyclogénèse (ALADIN - IBTRACS) selon seuil vorticité sur ALADIN")
-plt.xlabel('seuil vorticité')
-plt.ylabel('\Delta intensité cyclogénèse')
+# 3. Tracé
+plt.figure(figsize=(12, 8))
+
+# Création des contours remplis (la "chaleur")
+# 'viridis_r' ou 'plasma_r' sont bien car le RMSE est "mieux" quand il est bas
+cp = plt.contourf(xi, yi, zi, levels=20, cmap='turbo')
+plt.colorbar(cp, label='RMSE')
+
+# Ajout des lignes de contour pour plus de lisibilité
+contours = plt.contour(xi, yi, zi, levels=10, colors='white', alpha=0.3)
+plt.clabel(contours, inline=True, fontsize=8)
+
+# Affichage des points de mesure réels
+plt.scatter(x, y, c='red', s=20, edgecolors='black', label='Points testés')
+
+# Identification du point minimum (le meilleur réglage)
+idx_min = np.argmin(z)
+plt.plot(x[idx_min], y[idx_min], 'r*', markersize=15, label=f'Minimum (RMSE: {z[idx_min]:.2f} pour vort={y[idx_min]:.1f}, vent={x[idx_min]:.1f})')
+
+plt.xlabel('Seuil Vent ($m.s^{-1}$)')
+plt.ylabel('Seuil Vorticité ($s^{-1}$)')
+plt.title('Surface d\'erreur (RMSE) en fonction des seuils de détection')
 plt.legend()
-plt.show()
+plt.grid(alpha=0.2)
 
+plt.show()

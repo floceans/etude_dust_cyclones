@@ -5,7 +5,7 @@ start_year = 1960
 end_year = 2024
 # Vous pouvez changer 'rel10' par 'rel200' selon le groupe de fichiers à fusionner
 suffix = "rel10" 
-output_filename = f"combined_ERA5_{suffix}_1960_2024.csv"
+output_filename = f"ALADIN-{suffix}_{start_year}_{end_year}_new.csv"
 
 first_file = True
 
@@ -13,7 +13,7 @@ with open(output_filename, 'w', encoding='utf-8') as outfile:
     for year in range(start_year, end_year + 1):
         # Construction du nom de fichier (ex: 1960-1961)
 
-        filename = f"/home/puyf/Documents/git/etude_dust_cyclones/trac_3/suiERA5_evaluation_{year}-{year+1}.vor15_res17_1_-2_5.{suffix}.csv"
+        filename = f"/home/puyf/Documents/git/etude_dust_cyclones/trajectoires/new_traj_aladin/suiERA5_evaluation_{year}-{year+1}.vor15_res17_1_-2_5.{suffix}.csv"
         
         if os.path.exists(filename):
             print(f"Traitement de : {filename}...")

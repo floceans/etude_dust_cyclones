@@ -24,10 +24,8 @@ def indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax):
     """
     nx, ny = zi.shape
     
-    dx = (lonmax - lonmin) / (nx - 1)
-    dy = (latmax - latmin) / (ny - 1)
-    
-    indice = np.sum(zi) * dx * dy
+
+    indice = np.sum(np.abs(zi)) / nx * ny
     return indice
 
 def get_density(filename, yearmin, yearmax, xi, yi):
@@ -35,7 +33,7 @@ def get_density(filename, yearmin, yearmax, xi, yi):
     df = pd.read_csv(filename)
     df['date'] = pd.to_datetime(df['date'])
     
-    mask = (df['date'].dt.year >= yearmin) & (df['date'].dt.year <= yearmax)
+    mask = (df['date'].dt.year >= yearmin) & (df['date'].dt.year <= yearmax) & (df['vmax']>17)
     df_f = df.loc[mask]
     
     if df_f.empty:
@@ -53,9 +51,7 @@ def get_density(filename, yearmin, yearmax, xi, yi):
     return zi,x,y, len(x)
 
 
-def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vort):
-    print(f"--- Extraction des points de cyclogenèse dans {filename} ---")
-
+def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vort, seuil_vent, seuil_press):
     #####ibtracs = True if filename == 'ibtracs_transformed_1960_2024.csv' else False
 
     lons = []
@@ -68,7 +64,7 @@ def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, l
             if float(row['step']) == 1 :
                 nbr = 0
             year = int(row['date'][:4])
-            if yearmin <= year <= yearmax and float(row['vomax']) > seuil_vort and nbr == 0: #and row['step'] == '1':
+            if yearmin <= year <= yearmax and float(row['vomax']) > seuil_vort and nbr == 0 and float(row['vmax']) > seuil_vent and float(row['pmin'])<seuil_press: #and row['step'] == '1':
                 nbr += 1
                 lons.append(float(row['lon']))
                 lats.append(float(row['lat']))
@@ -92,10 +88,7 @@ def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, l
     return zi, x, y, xi, yi, len(x)
 
 def get_density_cyclogenese_ibtracs(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax):
-    print(f"--- Extraction des points de cyclogenèse dans {filename} ---")
-
     #####ibtracs = True if filename == 'ibtracs_transformed_1960_2024.csv' else False
-
     lons = []
     lats = []
     with open(filename, mode='r', encoding='utf-8') as f:
@@ -124,9 +117,6 @@ def get_density_cyclogenese_ibtracs(filename, yearmin, yearmax, lonmin, lonmax, 
     zi = k(coords)
 
     coef = len(x) / 4 * 25
-
-    print('##################################')
-    print(coef)
 
     zi = zi.reshape(xi.shape) * coef
 
