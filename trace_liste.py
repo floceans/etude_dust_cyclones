@@ -5,20 +5,23 @@ from scipy.interpolate import griddata
 
 # 1. Lecture du fichier sans pandas
 vent = []
-vort = []
+press = []
+#vort = []
 rmse = []
 
 with open('resultats_cyclogenese.txt', 'r') as f:
     reader = csv.reader(f)
     next(reader)  # Sauter l'en-tête
     for row in reader:
-        vort.append(float(row[0]))
+        #vort.append(float(row[0]))
+        press.append(float(row[0]))
         vent.append(float(row[1]))
         rmse.append(float(row[2]))
 
+
 # Conversion en tableaux numpy
 x = np.array(vent)
-y = np.array(vort)
+y = np.array(press)
 z = np.array(rmse)/(200*200)
 
 # 2. Création d'une grille régulière pour le lissage (interpolation)
@@ -49,9 +52,11 @@ idx_min = np.argmin(z)
 plt.plot(x[idx_min], y[idx_min], 'r*', markersize=15, label=f'Minimum (RMSE: {z[idx_min]:.2f} pour vort={y[idx_min]:.1f}, vent={x[idx_min]:.1f})')
 
 plt.xlabel('Seuil Vent ($m.s^{-1}$)')
-plt.ylabel('Seuil Vorticité ($s^{-1}$)')
+plt.ylabel('Seuil Pression ($hPa$)')
 plt.title('Surface d\'erreur (RMSE) en fonction des seuils de détection')
 plt.legend()
 plt.grid(alpha=0.2)
+
+plt.gca().invert_yaxis()
 
 plt.show()

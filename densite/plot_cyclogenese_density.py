@@ -9,7 +9,7 @@ AN_MIN = 1960
 AN_MAX = 2024
 SVORT = 0 #10,25, 100 à tester selon Fabrice
 SVENT = 28
-SPRESS = 1000
+SPRESS = 1005
 
 file = 'aladin'
 

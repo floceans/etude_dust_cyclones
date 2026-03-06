@@ -12,8 +12,7 @@ for s_vent in "${valeurs_vent[@]}"
 do
     for s_press in "${valeurs_press[@]}"
     do
-        echo "Exécution avec s_vent = $s_vent"
-        echo "Exécution avec s_vent = $s_vort"
+        echo "Exécution avec s_vent = $s_vent et s_press = $s_press " 
         /bin/python3 /home/puyf/Documents/git/etude_dust_cyclones/densite/diff_density_cyclogenese.py 1960 2024 "$s_press" "$s_vent" 0 #"$s_vort"
     done
 done

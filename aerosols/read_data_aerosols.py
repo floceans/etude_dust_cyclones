@@ -5,7 +5,7 @@ from func import load_data, print_stats, plot_aod_map, plot_time_series, plot_ti
 an_min = 2002
 an_max = 2010
 
-data = 'modis'  #modis aladin
+data = 'aladin_dust'  #modis aladin
 
 if data == 'modis':
     VAR_AOD = "od550dust"
@@ -48,11 +48,11 @@ if __name__ == "__main__":
 
     #plot_time_series_multi(aod_data_1, "merra")
     #plot_time_series_multi(aod_data_2, 'medis')
-    #plot_time_series_multi(aod_data_3, 'aladin_dust')
-    #plot_time_series_multi(aod_data_4, 'aladin_aer')
+    #plot_time_series_multi(aod_data_3, 'aladin_aer')
+    #plot_time_series_multi(aod_data_4, 'aladin_dust')
 
     # Histogramme
-    plot_histogram(aod_data, data)
+    #plot_histogram(aod_data, data)
     
     
     plt.show()

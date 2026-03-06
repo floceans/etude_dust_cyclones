@@ -1,7 +1,8 @@
 import csv
 import matplotlib.pyplot as plt
 from datetime import datetime
-
+import numpy as np
+from matplotlib.ticker import ScalarFormatter
 
 def calculate_regression(x, y):
     """Calcule manuellement la pente et l'interception (Moindres Carrés)."""
@@ -23,8 +24,8 @@ def calculate_regression(x, y):
     # Calcul simplifié du coefficient de corrélation R (optionnel pour le titre)
     return a, b
 
-def load_data(filename, svort):
-    """Charge et filtre les données sans pandas."""
+def load_data(filename, svort, spress, svent):
+
     vmax_list, pmin_list, vomax_list = [], [], []
     
     with open(filename, mode='r', encoding='utf-8') as f:
@@ -40,7 +41,7 @@ def load_data(filename, svort):
                 # 1. Si pmin est absent (vide), on ignore la ligne.
                 # 2. Si vomax est égal à 0, on ignore la ligne.
                 if pmin is not None and vomax is not None : #and vomax != 0:
-                    if vomax >= svort :
+                    if vomax >= svort and pmin<spress and vmax>svent:
                         vmax_list.append(vmax)
                         pmin_list.append(pmin)
                         vomax_list.append(vomax)
@@ -48,6 +49,61 @@ def load_data(filename, svort):
                 continue # Ignore les lignes mal formées
                 
     return vmax_list, pmin_list, vomax_list
+
+import csv
+
+
+
+def load_data_max(filename, seuil_vent, seuil_pression):
+    """
+    Détecte un nouveau cyclone chaque fois que 'step' revient à 1.
+    Garde uniquement le pic d'intensité par cyclone.
+    """
+    vmax_final, pmin_final = [], []
+    
+    # Variables temporaires pour le cyclone en cours de lecture
+    current_vmax = -1.0
+    current_pmin = 2000.0 # Valeur arbitraire haute
+    is_first_row = True
+
+    with open(filename, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                step = int(row['step'])
+                v = float(row['vmax'])
+                p = float(row['pmin'])
+
+                # Détection d'un nouveau cyclone
+                if step == 1:
+                    # Si ce n'est pas la toute première ligne du fichier, 
+                    # on enregistre le cyclone qui vient de se terminer
+                    if not is_first_row:
+                        if current_vmax > seuil_vent and current_pmin < seuil_pression and current_pmin > 100 :
+                            vmax_final.append(current_vmax)
+                            pmin_final.append(current_pmin)
+                    
+                    # Réinitialisation pour le nouveau cyclone
+                    current_vmax = v
+                    current_pmin = p
+                    is_first_row = False
+                else:
+                    # On est au sein du même cyclone, on met à jour les records
+                    if v > current_vmax: current_vmax = v
+                    if p < current_pmin: current_pmin = p
+                        
+            except (ValueError, KeyError):
+                continue
+
+        # Très important : on n'oublie pas d'ajouter le dernier cyclone 
+        # après la sortie de la boucle loop
+        if not is_first_row:
+            if current_vmax > seuil_vent and current_pmin < seuil_pression:
+                vmax_final.append(current_vmax)
+                pmin_final.append(current_pmin)
+
+    return vmax_final, pmin_final
+
 
 def plot_bar_charts(vmax, pmin, vomax, filename):
     """Trace les distributions sous forme de diagrammes bâtons (Histogrammes)."""
@@ -58,13 +114,13 @@ def plot_bar_charts(vmax, pmin, vomax, filename):
     axs[0].hist(vmax, bins=30, color='skyblue', edgecolor='black')
     axs[0].set_title("Distribution Vmax")
     axs[0].set_xlim(0, 100)
-    #axs[0].set_ylim(0, 1800)
+    axs[0].set_ylim(0, 2500)
 
     # Deuxième subplot
     axs[1].hist(pmin, bins=30, color='salmon', edgecolor='black')
     axs[1].set_title("Distribution Pmin")
     axs[1].set_xlim(800, 1020)
-    #axs[1].set_ylim(0, 2600)
+    axs[1].set_ylim(0, 2500)
 
     # Troisième subplot
     axs[2].hist(vomax, bins=30, color='lightgreen', edgecolor='black')
@@ -75,29 +131,59 @@ def plot_bar_charts(vmax, pmin, vomax, filename):
     plt.tight_layout()
     plt.show()
 
-def plot_relation(x, y, label_x, label_y, filename):
-    """Génère le nuage de points et la droite de régression."""
-    if not x or not y: 
-        print(f"Pas de données pour la relation {label_x}/{label_y}")
+def plot_relation(pmin_list, vmax_list, filename):
+    """
+    Régression : log(vmax) = log(alpha) + log((1020-pmin)^beta)
+    Affichage : vmax en fonction de pmin
+    """
+    pmin = np.array(pmin_list)
+    vmax = np.array(vmax_list)
+    
+    # 1. Préparation des données pour la régression
+    delta_p = 1020 - pmin
+    mask = (delta_p > 0) & (vmax > 0)
+    
+    x_reg = delta_p[mask]
+    y_reg_data = vmax[mask]
+    pmin_plot = pmin[mask] # Pour le scatter plot final
+
+    if len(x_reg) < 2:
+        print("Données insuffisantes.")
         return
-        
-    plt.figure(figsize=(8, 6))
-    plt.scatter(x, y, alpha=0.1, s=10, label="Données")
+
+    # 2. Régression linéaire sur les logs : log(V) = beta*log(dP) + log(alpha)
+    beta, log_alpha = np.polyfit(np.log(x_reg), np.log(y_reg_data), 1)
+    alpha = np.exp(log_alpha)
+
+    # 3. Préparation du tracé
+    plt.figure(figsize=(10, 6))
     
-    a, b = calculate_regression(x, y)
-    if a is not None:
-        # Création de la ligne de régression
-        x_reg = [min(x), max(x)+20]
-        y_reg = [a * xi + b for xi in x_reg]
-        plt.plot(x_reg, y_reg, color='red', linewidth=2, label=f"Régression: y={a:.2f}x+{b:.2f}")
+    # Nuage de points original (vmax vs pmin)
+    plt.scatter(y_reg_data, pmin_plot, alpha=0.25, s=20, color='teal', label=f"data {filename}")
+
+    # Génération de la courbe de tendance
+    # On crée un range de pmin pour que la courbe soit lisse
+    pmin_smooth = np.linspace(pmin_plot.min(), pmin_plot.max(), 100)
+    # Application de la formule : V = alpha * (1020 - P)^beta
+    v_pred = alpha * (1020 - pmin_smooth)**beta
     
-    plt.xlabel(label_x)
-    plt.ylabel(label_y)
-    plt.title(f"Relation {label_x} vs {label_y} pour data {filename}")
-    plt.xlim(880, 1030)
-    plt.ylim(0, 100)
+    plt.plot(v_pred, pmin_smooth, color='red', linewidth=2.5,
+             label=f"Modèle : $V_{{max}} = {alpha:.2f} \cdot (1020 - P_{{min}})^{{{beta:.2f}}}$")
+
+    # 4. Cosmétique
+    plt.ylabel("$P_{min}$ /cyclone [hPa]")
+    plt.xlabel("$V_{max}$ /cyclone [m/s]")
+    plt.title(f"Relation Vent/Pression sur data {filename}")
+    
+    # On inverse l'axe X car les cyclones plus intenses sont à gauche (pression basse)
+    #plt.gca().invert_xaxis()
+    plt.gca().invert_yaxis()
+
+    plt.xlim(0, 100)
+    plt.ylim(1020, 850)
+    
+    plt.grid(True, linestyle='--', alpha=0.5)
     plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.6)
     plt.show()
 
 

@@ -119,10 +119,7 @@ def plot_time_series(da, filename):
     plt.tight_layout()
 
 def plot_time_series_multi(da, filename):
-    """
-    Ajoute une courbe au graphique actuel. 
-    Note : plt.figure() doit être appelé AVANT d'utiliser cette fonction.
-    """
+
     if "time" not in da.dims: 
         print(f"Erreur : pas de dimension 'time' dans {filename}")
         return
@@ -140,7 +137,7 @@ def plot_time_series_multi(da, filename):
     
     # 3. Configuration du graphique (écrasée à chaque appel, donc seule la dernière compte)
     plt.title("Séries temporelles AOD (Moyenne zone Atlantique)", fontweight='bold')
-    plt.ylim(0, 0.35)
+    #plt.ylim(0, 0.35)
     plt.grid(True, alpha=0.3)
     
     # 4. Activation de la légende
@@ -156,5 +153,6 @@ def plot_histogram(da, filename):
     plt.title(f"Distribution de l'AOD ({filename})", fontweight='bold')
     plt.yscale('log')
     plt.xlim(0,1.8)
+    plt.ylim(0, 10**7)
 
     plt.tight_layout()

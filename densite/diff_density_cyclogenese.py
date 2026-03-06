@@ -14,7 +14,7 @@ def main():
     AN_MAX = 2024
     SVORT = 0
     SVENT = 28
-    SPRESS = 1020
+    SPRESS = 1005
 
     file1 = 'ALADIN_rel10_1960_2024.csv'
     file2 = 'ibtracs_transformed_1960_2024.csv'
@@ -27,7 +27,7 @@ def main():
 
 
     # config grille pr deux densités
-    lonmin, lonmax, latmin, latmax = -105, 5, 0, 25
+    lonmin, lonmax, latmin, latmax = -105, 5, 0, 35
     #-105, 5, 5, 35 #pr tt domaine - 
     #mdr -60, -15, 5, 20 #
     #mdr++ -105, 5, 0, 25
@@ -52,7 +52,7 @@ def main():
 
     with open(nom_fichier, 'a') as fichier:
 #        fichier.write(f"seuil vort: {seuil_vort} | seuil vent: {seuil_vent} | RMSE: {indice_global_cyclogenese_diff:.2f} | Npts {file1}: {npts1} | Npts {file2}: {npts2}\n")
-        fichier.write(f"{seuil_vort}, {seuil_vent}, {indice_global_cyclogenese_diff:.2f}, {npts1}, {npts2}\n")
+        fichier.write(f"{seuil_press}, {seuil_vent}, {indice_global_cyclogenese_diff:.2f}, {npts1}, {npts2}\n")
 
     # --- Plotting ---
     fig = plt.figure(figsize=(12, 8))
@@ -75,11 +75,11 @@ def main():
     cbar = plt.colorbar(cf, orientation='horizontal', pad=0.1, aspect=40)
     cbar.set_label(f'Différence de densité ({file1} - {file2})')
 
-    plt.title(f'Carte Différence cyclogénèse\n{yearmin}-{yearmax} \n seuil vort = {seuil_vort}$s^{-1}$, seuil vent = {seuil_vent}$m.s^{-1}$ sur Aladin', fontsize=14)
+    plt.title(f'Carte Différence cyclogénèse\n{yearmin}-{yearmax} \n seuil press = {seuil_press}$s^{-1}$, seuil vent = {seuil_vent}$m.s^{-1}$ sur Aladin', fontsize=14)
     
     output = "difference_density.png"
     #plt.savefig(output, dpi=150, bbox_inches='tight')
-    #plt.show()
+    plt.show()
 
 if __name__ == "__main__":
     main()
