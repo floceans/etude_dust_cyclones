@@ -2,16 +2,23 @@ import csv
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+conversion_factor = 1.94384  # m/s vers Noeuds
+
 # --- 1. Paramètres de filtrage et fichiers ---
-annee_min = 2000
+annee_min = 1960
 annee_max = 2020
+data_f = 'aladin'
+svent = 28*conversion_factor
 
 aladin = 'ALADIN_rel10_1960_2024.csv'
 ibtracs = 'ibtracs_transformed_1960_2024.csv'
 
-file_path = ibtracs  # Modifiez ici pour changer de source
+if data_f == 'aladin' :
+    file_path = aladin
+else :
+    file_path = ibtracs
 
-conversion_factor = 1.94384  # m/s vers Noeuds
+
 cyclones = {}  # { (year, numtc): { 'vmax': [], 'lon': [], 'lat': [] } }
 
 # --- 2. Lecture du fichier CSV avec filtre temporel ---
@@ -51,9 +58,8 @@ annual_ace = {}
 cyclone_ace_results = [] 
 
 for (year, num), data in cyclones.items():
-    # Formule ACE : somme des (v^2)/10000 pour v >= 35 kts
-    ace_val = sum((v**2) / 10000 for v in data['vmax'] if v >= 35)
-    
+    # ace + seuillage à 28m/s
+    ace_val = sum((v**2) / 10000 for v in data['vmax'] if (v > svent and data_f == 'aladin') or data_f == 'ibtracs')
     # Agrégation annuelle
     annual_ace[year] = annual_ace.get(year, 0) + ace_val
     
@@ -81,6 +87,7 @@ ax1.bar(sorted_years, ace_values, color='skyblue', edgecolor='navy')
 ax1.set_title(f"Énergie Cyclonique Accumulée (ACE) de {annee_min} à {annee_max}", fontsize=14)
 ax1.set_ylabel("ACE ($10^4 kt^2$)")
 ax1.tick_params(axis='x', rotation=70)
+ax1.set_ylim(0, 375)
 
 # Plot 2 : Trajectoires du Top 5 de la période
 if top_5_tcs:
@@ -94,5 +101,6 @@ if top_5_tcs:
 else:
     ax2.text(0.5, 0.5, "Aucune donnée sur cette période", ha='center')
 
+plt.title(f'Données {data_f}')
 plt.tight_layout()
 plt.show()

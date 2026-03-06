@@ -15,8 +15,10 @@ from func_dust_cy import load_data
 an_min = 2002
 an_max = 2010
 #conversion_factor = 1.9438
+svent = 28
+spress = 1005
 
-data_f = 'ibtracs'
+data_f = 'aladin'
 
 # Fichiers
 ibtracs = 'ibtracs_transformed_1960_2024.csv'
@@ -37,10 +39,10 @@ merra = '/home/puyf/Documents/dust_brut_1/merra/AOT_MERRA2_198001-202012.nc'
 modis = '/home/puyf/Documents/dust_brut_1/modis/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc'
 
 
-AOD_FILE_PATH_1 = aladin_dust 
-AOD_FILE_PATH_2 = modis
-VAR_AOD_1 = "od550dust"
-VAR_AOD_2 = None #"DUEXTTAU"
+AOD_FILE_PATH_1 = aladin_aer 
+AOD_FILE_PATH_2 = merra
+VAR_AOD_1 = "od550aer"
+VAR_AOD_2 = "DUEXTTAU"
 
 # AOD
 aod_masked_1 = load_data(AOD_FILE_PATH_1, VAR_AOD_1, an_min, an_max)
@@ -57,6 +59,8 @@ values_aod_1 = aod_annual_series_1.values
 values_aod_2 = aod_annual_series_2.values
 
 
+print(values_aod_2)
+
 # ACE 
 cyclones = {}
 with open(FILE, mode='r', encoding='utf-8') as f:
@@ -66,7 +70,7 @@ with open(FILE, mode='r', encoding='utf-8') as f:
         year_str = date_str[:4]
         year_int = int(year_str)
         
-        if an_min <= year_int <= an_max:
+        if an_min <= year_int <= an_max : #data_f=='aladin and float(row['vmax'])>28 and float(row['pmin'])<1005) or data_f == 'ibtracs':
             tc_id = (year_str, row['numtc'])
             if tc_id not in cyclones:
                 cyclones[tc_id] = {'vmax': []}
@@ -79,7 +83,7 @@ with open(FILE, mode='r', encoding='utf-8') as f:
 # Calcul de l'ACE par année
 annual_ace = {str(y): 0.0 for y in range(an_min, an_max + 1)}
 for (year, num), data in cyclones.items():
-    ace_val = sum((v**2) / 10000 for v in data['vmax'] if v >= 35)
+    ace_val = sum(((v*1.94)**2) / 10000 for v in data['vmax'] if (v > svent and data_f == 'aladin') or data_f == 'ibtracs') ### filtrage ici
     annual_ace[year] += ace_val
 
 sorted_years = sorted(annual_ace.keys())
@@ -91,6 +95,7 @@ fig, ax1 = plt.subplots(figsize=(12, 6))
 # plot histogramme ACE
 color_ace = 'steelblue'
 bars = ax1.bar(sorted_years, ace_values, color=color_ace, alpha=0.6, label='ACE (Cyclones)')
+ax1.set_ylim(0,360)
 ax1.set_xlabel('Année', fontsize=12)
 ax1.set_ylabel('ACE ($10^4 kt^2$)', color=color_ace, fontsize=12)
 ax1.tick_params(axis='y', labelcolor=color_ace)
@@ -100,6 +105,7 @@ ax1.set_title(f'Relation ACE vs AOD - {data_f} - ({an_min}-{an_max})', fontsize=
 ax2 = ax1.twinx()  # Création du deuxième axe Y
 color_aod = 'darkorange'
 
+
 if data_f == 'aladin':
     ax2.plot([str(y) for y in years_aod], values_aod_1, color=color_aod, marker='o', linewidth=2, label=f'AOD ({data_f})')
 elif data_f == 'ibtracs':
@@ -107,6 +113,7 @@ elif data_f == 'ibtracs':
 
 ax2.set_ylabel(f'Aerosol Optical Depth (AOD)', color=color_aod, fontsize=12)
 ax2.tick_params(axis='y', labelcolor=color_aod)
+ax2.set_ylim(0.2,0.25)
 
 
 

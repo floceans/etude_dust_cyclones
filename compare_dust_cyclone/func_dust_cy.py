@@ -13,23 +13,16 @@ def mask_time(da, year_min=2021, year_max=2024, juin_sept=False):
         mask = (da.time.dt.month >= 6) & (da.time.dt.month <= 9)
     return da.where(mask, drop=True)
 
-def mask_atlantic(da):
+def mask_atlantic_seuils(da):
     """
     Applique un masque sur une grille 2D (curvilinéaire).
     """
     lat_min, lat_max = 5, 35
     lon_min, lon_max = -105, 5
-    
-    # On identifie les noms réels des coordonnées de latitude et longitude
-    # Dans ton fichier ALADIN, c'est probablement 'lat' et 'lon' (ou 'latitude'/'longitude')
-    # On crée un masque booléen 2D
-    
+ 
     mask = (da.lat >= lat_min) & (da.lat <= lat_max) & (da.lon >= lon_min) & (da.lon <= lon_max)
     
-    # .where(mask, drop=True) masque les valeurs hors zone ET 
-    # réduit les dimensions x et y au plus petit rectangle englobant.
-
-    
+    # .where(mask, drop=True) masque valeurs hors zone ET 
     da_masked = da.where(mask, drop=True)
     
     return da_masked
@@ -53,7 +46,7 @@ def load_data(path, var_name, ymin, ymax, juin_sept=False):
     
     # 2. Application du masque spécifique 2D
 
-    aod_masked = mask_atlantic(da)
+    aod_masked = mask_atlantic_seuils(da)
     
     # 3. Application du masque temporel
     aod_masked = mask_time(aod_masked, ymin, ymax, juin_sept)
@@ -86,7 +79,7 @@ def plot_time_series_multi(da, filename):
     
     # 3. Configuration du graphique (écrasée à chaque appel, donc seule la dernière compte)
     plt.title(f"AOD/nbr cyclones {filename} (Moyenne zone Atlantique 5-35, -105, 5)", fontweight='bold')
-    #plt.ylim(0, 0.35)
+    plt.ylim(0, 0.35)
     plt.grid(True, alpha=0.3)
     
     # 4. Activation de la légende
@@ -148,7 +141,7 @@ def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_sept_uniquement=Fal
     
     # Configuration du second axe
     ax2.set_ylabel("Nombre de cyclones", fontweight='bold')
-    ax2.set_ylim(0, max(liste_counts) + 1 if liste_counts else 10)
+    ax2.set_ylim(0, 10)
     
     # Fusion des légendes (optionnel mais propre)
     ax2.legend(loc='upper left')

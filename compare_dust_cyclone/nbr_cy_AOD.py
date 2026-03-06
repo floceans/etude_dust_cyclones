@@ -49,12 +49,14 @@ aladin_aer = '/home/puyf/Documents/dust_brut_1/aladin/od550aer_CAM-25_ERA5_evalu
 aod_data_3 = load_data(aladin_aer, "od550aer", YEAR_MIN, YEAR_MAX,juin_sept)
 aod_data_4 = load_data(aladin_dust, 'od550dust', YEAR_MIN, YEAR_MAX,juin_sept)
 
-plot_time_series_multi(aod_data_4, 'aladin_dust')
+plot_time_series_multi(aod_data_3, 'aladin_aer')
 
 
 aladin_cy = '/home/puyf/Documents/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv'
 
 nbr_cyclones_mois(aladin_cy, YEAR_MIN, YEAR_MAX, juin_sept, "Nombre de cyclones Aladin")
+
+
 
 plt.show()
 
