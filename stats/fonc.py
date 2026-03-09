@@ -131,7 +131,17 @@ def plot_bar_charts(vmax, pmin, vomax, filename):
     plt.tight_layout()
     plt.show()
 
-def plot_relation(pmin_list, vmax_list, filename):
+import netCDF4 as nc
+import os
+
+# --- CONFIGURATION ---
+# Liste des périodes à concaténer
+dates_a_traiter = ["202101-202312", "202401-202612"] 
+template_nom = "od550dust_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM-ALADIN64C1_v1-r1_mon_{}.nc"
+fichier_final = "od550dust_global_concatene.nc"
+
+
+def plot_relation(pmin_list, vmax_list, filename, ax=None, color='teal'):
     """
     Régression : log(vmax) = log(alpha) + log((1020-pmin)^beta)
     Affichage : vmax en fonction de pmin
@@ -139,52 +149,53 @@ def plot_relation(pmin_list, vmax_list, filename):
     pmin = np.array(pmin_list)
     vmax = np.array(vmax_list)
     
-    # 1. Préparation des données pour la régression
+    # 1. Préparation des données
     delta_p = 1020 - pmin
     mask = (delta_p > 0) & (vmax > 0)
     
     x_reg = delta_p[mask]
     y_reg_data = vmax[mask]
-    pmin_plot = pmin[mask] # Pour le scatter plot final
+    pmin_plot = pmin[mask]
 
     if len(x_reg) < 2:
-        print("Données insuffisantes.")
+        print(f"Données insuffisantes pour {filename}.")
         return
 
-    # 2. Régression linéaire sur les logs : log(V) = beta*log(dP) + log(alpha)
+    # 2. Régression linéaire sur les logs
     beta, log_alpha = np.polyfit(np.log(x_reg), np.log(y_reg_data), 1)
     alpha = np.exp(log_alpha)
 
-    # 3. Préparation du tracé
-    plt.figure(figsize=(10, 6))
+    # 3. Gestion de l'axe (si ax est None, on crée une nouvelle figure)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 6))
     
-    # Nuage de points original (vmax vs pmin)
-    plt.scatter(y_reg_data, pmin_plot, alpha=0.25, s=20, color='teal', label=f"data {filename}")
+    # Nuage de points
+    ax.scatter(y_reg_data, pmin_plot, alpha=0.2, s=15, color=color, label=f"Points : {filename}")
 
-    # Génération de la courbe de tendance
-    # On crée un range de pmin pour que la courbe soit lisse
+    # Courbe de tendance
     pmin_smooth = np.linspace(pmin_plot.min(), pmin_plot.max(), 100)
-    # Application de la formule : V = alpha * (1020 - P)^beta
     v_pred = alpha * (1020 - pmin_smooth)**beta
     
-    plt.plot(v_pred, pmin_smooth, color='red', linewidth=2.5,
-             label=f"Modèle : $V_{{max}} = {alpha:.2f} \cdot (1020 - P_{{min}})^{{{beta:.2f}}}$")
+    ax.plot(v_pred, pmin_smooth, color=color, linewidth=2,
+             label=f"Modèle {filename}: $V_{{max}} = {alpha:.1f} \cdot \Delta P^{{{beta:.2f}}}$")
 
-    # 4. Cosmétique
-    plt.ylabel("$P_{min}$ /cyclone [hPa]")
-    plt.xlabel("$V_{max}$ /cyclone [m/s]")
-    plt.title(f"Relation Vent/Pression sur data {filename}")
+    # 4. Cosmétique (appliquée sur l'objet ax)
+    ax.set_ylabel("$P_{min}$ [hPa]")
+    ax.set_xlabel("$V_{max}$ [m/s]")
+    ax.set_title("Comparaison Relation Vent/Pression")
     
-    # On inverse l'axe X car les cyclones plus intenses sont à gauche (pression basse)
-    #plt.gca().invert_xaxis()
-    plt.gca().invert_yaxis()
+    # Inversion de l'axe Y (pression décroissante vers le haut)
+    # On vérifie si c'est déjà inversé pour ne pas le remettre à l'endroit au 2ème appel
+    if ax.get_ylim()[0] < ax.get_ylim()[1]:
+        ax.invert_yaxis()
 
-    plt.xlim(0, 100)
-    plt.ylim(1020, 850)
-    
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.legend()
-    plt.show()
+    ax.set_xlim(0, 100)
+    ax.set_ylim(1020, 850)
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.legend()
+
+    return ax # On retourne l'axe pour pouvoir le réutiliser
+
 
 
 
