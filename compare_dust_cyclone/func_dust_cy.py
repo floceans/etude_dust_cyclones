@@ -3,14 +3,19 @@ import matplotlib.pyplot as plt
 import csv
 from datetime import datetime
 
-def mask_time(da, year_min=2021, year_max=2024, juin_sept=False):
-    """Masque les données en dehors de la plage temporelle spécifiée."""
+def mask_time(da, year_min, year_max, juin_oct=False):
+    """Masque les données sur la plage d'années ET optionnellement sur les mois."""
     if "time" not in da.dims:
         print("Attention : La variable n'a pas de dimension temporelle.")
         return da
+    
+    # Masque pour les années
     mask = (da.time.dt.year >= year_min) & (da.time.dt.year <= year_max)
-    if juin_sept : 
-        mask = (da.time.dt.month >= 6) & (da.time.dt.month <= 9)
+    
+    # Masque additionnel pour les mois (ne pas écraser, mais ajouter)
+    if juin_oct:
+        mask = mask & (da.time.dt.month >= 6) & (da.time.dt.month <= 10)
+        
     return da.where(mask, drop=True)
 
 def mask_atlantic_seuils(da):
@@ -29,7 +34,7 @@ def mask_atlantic_seuils(da):
 
 
 
-def load_data(path, var_name, ymin, ymax, juin_sept=False):
+def load_data(path, var_name, ymin, ymax, juin_oct=False):
     """Charge le dataset et gère les coordonnées 2D d'ALADIN."""
     ds = xr.open_dataset(path)
     
@@ -49,7 +54,7 @@ def load_data(path, var_name, ymin, ymax, juin_sept=False):
     aod_masked = mask_atlantic_seuils(da)
     
     # 3. Application du masque temporel
-    aod_masked = mask_time(aod_masked, ymin, ymax, juin_sept)
+    aod_masked = mask_time(aod_masked, ymin, ymax, juin_oct)
 
     #aod = aod_masked - aod_masked.mean()
 
@@ -88,7 +93,7 @@ def plot_time_series_multi(da, filename):
 
 
 
-def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_sept_uniquement=False, label="Nombre de cyclones"):
+def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_oct_uniquement=False, label="Nombre de cyclones"):
     """
     Renvoie la liste des cyclones par mois et trace les points sur le graphique actuel.
     """
@@ -102,7 +107,7 @@ def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_sept_uniquement=Fal
             annee, mois, id_tc = date_obj.year, date_obj.month, row['numtc']
 
             if annee_min <= annee <= annee_max:
-                if juin_sept_uniquement and not (6 <= mois <= 9):
+                if juin_oct_uniquement and not (6 <= mois <= 10):
                     continue
                 
                 cle = (annee, mois)
@@ -147,3 +152,60 @@ def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_sept_uniquement=Fal
     ax2.legend(loc='upper left')
     
     #return liste_counts
+
+
+def get_cyclone_climatology(file_path, year_min, year_max):
+    """Calcule le nombre moyen de cyclones par mois sans pandas."""
+    # Dictionnaire de sets pour stocker les IDs uniques (année, num_tc) par mois
+    monthly_unique_tcs = {m: set() for m in range(1, 13)}
+    num_years = year_max - year_min + 1
+
+    with open(file_path, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            # Extraction de la date (format YYYY-MM-DD...)
+            try:
+                dt = datetime.strptime(row['date'].strip()[:10], '%Y-%m-%d')
+            except ValueError:
+                # Si le format est différent (ex: YYYYMMDD), adapter ici
+                dt = datetime.strptime(row['date'].strip()[:8], '%Y%m%d')
+
+            if year_min <= dt.year <= year_max:
+                # On crée une clé unique pour le cyclone dans cette année
+                tc_id = (dt.year, row['numtc'])
+                monthly_unique_tcs[dt.month].add(tc_id)
+
+    # Conversion en moyenne par année
+    clim_counts = [len(monthly_unique_tcs[m]) / num_years for m in range(1, 13)]
+    return clim_counts
+
+def get_aod_climatology_xr(da):
+    """Calcule la moyenne mensuelle spatiale puis temporelle."""
+    # 1. Moyenne spatiale (lat/lon ou x/y selon le modèle)
+    spatial_dims = [d for d in da.dims if d != 'time']
+    da_spatial_mean = da.mean(dim=spatial_dims)
+    
+    # 2. Moyenne par mois (Climatologie)
+    # Renvoie un DataArray de taille 12
+    return da_spatial_mean.groupby('time.month').mean(dim='time')
+
+def plot_climatology(aod_clim, cy_counts, title):
+    months = list(range(1, 13))
+    month_names = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+    
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+
+    # Axe gauche : Cyclones (Barres)
+    ax1.bar(months, cy_counts, color='steelblue', alpha=0.4, label='Nombre moyen cyclones')
+    ax1.set_ylabel('Fréquence (nb/an)', color='steelblue')
+    ax1.set_xticks(months)
+    ax1.set_xticklabels(month_names)
+
+    # Axe droit : AOD (Ligne)
+    ax2 = ax1.twinx()
+    ax2.plot(months, aod_clim.values, color='darkorange', marker='s', linewidth=2, label='AOD')
+    ax2.set_ylabel('AOD (moyenne)', color='darkorange')
+
+    plt.title(title)
+    ax1.grid(axis='y', linestyle='--', alpha=0.3)
+    fig.tight_layout()

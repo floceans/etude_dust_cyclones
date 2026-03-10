@@ -3,17 +3,6 @@ import matplotlib.pyplot as plt
 from func_dust_cy import load_data, plot_time_series_multi, nbr_cyclones_mois
 
 
-'''
-# chemin du dossier courant du script
-current_dir = os.path.dirname(__file__)
-
-# chemin vers le dossier frère
-aerosols_path = os.path.abspath(os.path.join(current_dir, "../aerosols"))
-
-sys.path.append(aerosols_path)
-
-from func import plot_time_series_multi, load_data
-'''
 
 ################## OBS -> IBTRACS + MODIS #######################
 
