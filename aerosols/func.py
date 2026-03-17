@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+import plotly.graph_objects as go
+from scipy.interpolate import griddata
 
 def mask_time(da, year_min=2021, year_max=2024):
     """Masque les données en dehors de la plage temporelle spécifiée."""
@@ -33,27 +35,36 @@ def mask_atlantic(da):
     
     return da_masked
 
-def load_data(path, var_name, an_min, an_max):
-    """Charge le dataset et gère les coordonnées 2D d'ALADIN."""
+def load_data(path, var_name, an_min, an_max, JJASO=False):
+    """
+    Charge le dataset, gère les coordonnées 2D et applique les masques spatiaux, 
+    temporels et saisonniers.
+    """
     ds = xr.open_dataset(path)
     
     if var_name is None:
         var_name = list(ds.data_vars)[0]
     da = ds[var_name]
 
-
-    # 1. Correction des longitudes (0-360 -> -180-180) AVANT le masque
+    # 1. Correction des longitudes (0-360 -> -180-180)
     if da.lon.max() > 180:
-        # Pour les grilles 2D, on modifie les valeurs directement
         new_lon = ((da.lon + 180) % 360) - 180
         da = da.assign_coords(lon=new_lon)
     
-    # 2. Application du masque spécifique 2D
-
+    # 2. Application du masque spécifique 2D (Atlantique)
     aod_masked = mask_atlantic(da)
     
-    # 3. Application du masque temporel
+    # 3. Application du masque temporel (années)
     aod_masked = mask_time(aod_masked, an_min, an_max)
+
+    # 4. Nouveau : Filtre saisonnier JJASO
+    if JJASO:
+        # On vérifie quand même que la dimension 'time' est présente
+        if "time" in aod_masked.dims:
+            # .isin([6, 7, 8, 9, 10]) sélectionne Juin à Octobre
+            aod_masked = aod_masked.sel(time=aod_masked.time.dt.month.isin([6, 7, 8, 9, 10]))
+        else:
+            print("Attention : Impossible d'appliquer le filtre JJASO (pas de dimension temporelle).")
 
     return aod_masked
 
@@ -101,6 +112,75 @@ def plot_aod_map(da, filename):
     plt.tight_layout()
     return fig
 
+
+def plot_aod_diff_map(da1, da2, name1, name2, vlimit=0.1):
+    # 1. Préparation des données (Moyenne temporelle)
+    m1 = da1.mean(dim="time").squeeze() if "time" in da1.dims else da1.squeeze()
+    m2 = da2.mean(dim="time").squeeze() if "time" in da2.dims else da2.squeeze()
+
+    # 2. REGRIDDING (Interpolation de m2 sur la grille y, x de m1)
+    # Pour les grilles 2D (lat/lon en matrices), on utilise interp_like sur les dimensions y, x
+    # On part du principe que m1 est ta référence (ex: ALADIN)
+    try:
+        m2_resampled = m2.interp(y=m1.y, x=m1.x, method="linear")
+    except Exception:
+        m2_resampled = m2.interp(lat=m1.lat, lon=m1.lon, method="linear")
+        # Si les noms de dimensions diffèrent entre les deux fichiers
+        #m2_resampled = m2.interp_like(m1, method="linear")
+
+    # 3. Calcul de la différence
+    diff_total = m1 - m2_resampled
+    
+    # On s'assure que les coordonnées lat/lon de m1 sont bien rattachées au résultat
+    diff_total = diff_total.assign_coords(lat=m1["lat"], lon=m1["lon"])
+
+    # --- SÉLECTION DE LA ZONE (5N-30N, 100W-0W) ---
+    lat_min, lat_max = 10, 30
+    lon_min, lon_max = -15, 5
+
+    # Masquage géographique robuste pour grilles 2D
+    mask = (diff_total["lat"] >= lat_min) & (diff_total["lat"] <= lat_max) & \
+           (diff_total["lon"] >= lon_min) & (diff_total["lon"] <= lon_max)
+    
+    diff_zone = diff_total.where(mask, drop=True)
+
+    # --- CALCUL DU RMSE SUR LA ZONE ---
+    # On ignore les NaNs (zones hors masque ou sans données)
+    rmse_val = np.sqrt((diff_zone**2).mean(skipna=True)).values
+    print(f"--- Statistiques [{name1} vs {name2}] ---")
+    print(f"RMSE Zone ({lat_min}, {lat_max}N - {lon_min}, {lon_max}W): {rmse_val:.4f}")
+
+    # 4. TRACÉ
+    fig = plt.figure(figsize=(11, 6))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+
+    # Utilisation de x="lon" et y="lat" car ce sont des coordonnées 2D
+    im = diff_zone.plot.pcolormesh(
+        ax=ax, 
+        x="lon", y="lat", 
+        transform=ccrs.PlateCarree(),
+        add_colorbar=True,
+        vmin=-vlimit, vmax=vlimit,
+        cbar_kwargs={'label': f'Différence AOD ({name1} - {name2})', 'pad': 0.02, 'shrink': 0.8},
+        cmap="RdBu_r", 
+        robust=True
+    )
+
+    # Cosmétique de la carte
+    ax.add_feature(cfeature.COASTLINE, linewidth=0.8, zorder=3)
+    ax.add_feature(cfeature.BORDERS, linestyle=':', alpha=0.5, zorder=3)
+    
+    # Zoom sur la zone
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+    
+    gl = ax.gridlines(draw_labels=True, linestyle='--', alpha=0.4)
+    gl.top_labels = gl.right_labels = False
+
+    plt.title(f"Différence AOD : {name1} - {name2}\nRMSE: {rmse_val:.4f}", pad=15, fontweight='bold')
+    plt.tight_layout()
+    
+    return fig
+
 def plot_time_series(da, filename):
     """Série temporelle sur les dimensions x, y."""
 
@@ -118,14 +198,14 @@ def plot_time_series(da, filename):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
-def plot_time_series_multi(da, filename):
+def plot_time_series_multi(da, filename, linestyle = '-', color = 'orange'):
 
     if "time" not in da.dims: 
         print(f"Erreur : pas de dimension 'time' dans {filename}")
         return
     
     # 1. Sélection automatique des dimensions spatiales selon le nom du fichier
-    if filename in ['aladin_dust', 'aladin_aer']:
+    if filename in ['aladin_dust', 'aladin_aer', 'aladin_dust_3s', 'aladin_dust_3s_mdr']:
         dims_to_mean = ["x", "y"]
     else:
         dims_to_mean = ["lat", "lon"]
@@ -133,7 +213,9 @@ def plot_time_series_multi(da, filename):
     # 2. Tracé de la moyenne spatiale
     # On utilise 'label' pour que la légende s'affiche correctement
     # On ne fixe pas la couleur pour que Matplotlib change de couleur à chaque appel
-    da.mean(dim=dims_to_mean).plot(label=filename, linewidth=1.5)
+        
+    da.mean(dim=dims_to_mean).plot(label=filename, linewidth=1.5, linestyle=linestyle, color = color)
+
     
     # 3. Configuration du graphique (écrasée à chaque appel, donc seule la dernière compte)
     plt.title("Séries temporelles AOD (Moyenne zone Atlantique)", fontweight='bold')
@@ -156,3 +238,88 @@ def plot_histogram(da, filename):
     plt.ylim(0, 10**7)
 
     plt.tight_layout()
+
+def plot_climatology_bars(datasets_dict, title="Climatologie Mensuelle de l'AOD"):
+    """
+    Trace un graphique à bâtons comparatif de la climatologie mensuelle.
+    datasets_dict : dict sous forme {'Nom du dataset': DataArray}
+    """
+    months = np.arange(1, 13)
+    month_names = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 
+                   'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+    
+    plt.figure(figsize=(12, 6))
+    
+    # Paramètres pour les barres groupées
+    n_datasets = len(datasets_dict)
+    total_width = 0.8
+    bar_width = total_width / n_datasets
+    
+    for i, (label, da) in enumerate(datasets_dict.items()):
+        # 1. Moyenne spatiale (sur lat et lon)
+        # On utilise .mean() sur les dimensions spatiales
+        spatial_mean = da.mean(dim=da.dims[1:], skipna=True)
+        
+        # 2. Moyenne par mois (Climatologie)
+        climatology = spatial_mean.groupby('time.month').mean()
+        
+        # S'assurer que tous les mois sont présents (au cas où il manque des données)
+        values = [climatology.sel(month=m).values if m in climatology.month else 0 for m in months]
+        
+        # 3. Positionnement des barres sur l'axe X
+        pos = months - (total_width/2) + (i * bar_width) + (bar_width/2)
+        
+        plt.bar(pos, values, width=bar_width, label=label)
+
+    plt.xticks(months, month_names)
+    plt.xlabel('Mois')
+    plt.ylabel('AOD (550 nm)')
+    plt.title(title)
+    plt.legend()
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+
+
+def plot_time_series_interactive(datasets_dict, output_file="comparaison_aod.html"):
+    """
+    Crée un graphique interactif exportable en HTML.
+    datasets_dict : dictionnaire { 'Nom': (DataArray, 'couleur', 'style') }
+    """
+    fig = go.Figure()
+
+    for name, (da, color, dash) in datasets_dict.items():
+        # Détection automatique des dimensions spatiales
+        dims_to_mean = ["x", "y"] if any(d in da.dims for d in ["x", "y"]) else ["lat", "lon"]
+        
+        # Calcul de la moyenne spatiale
+        ts = da.mean(dim=dims_to_mean, skipna=True)
+        
+        # Conversion en DataFrame pour Plotly
+        df = ts.to_dataframe(name="AOD").reset_index()
+
+        # Ajout de la courbe
+        fig.add_trace(go.Scatter(
+            x=df['time'],
+            y=df['AOD'],
+            mode='lines',
+            name=name,
+            line=dict(color=color, dash=dash, width=2),
+            hovertemplate='%{x|%Y-%m}: <b>%{y:.3f}</b><extra></extra>'
+        ))
+
+    # Mise en forme du graphique
+    fig.update_layout(
+        title="Séries temporelles AOD (Interactif)",
+        xaxis_title="Temps",
+        yaxis_title="AOD (550 nm)",
+        template="plotly_white",
+        hovermode="x unified",
+        legend=dict(itemclick="toggle", itemdoubleclick="toggleothers") # Permet le clic pour masquer
+    )
+
+    # Export en fichier HTML autonome
+    fig.write_html(output_file)
+    print(f"Graphique interactif sauvegardé sous : {output_file}")
+    
+    # Affichage immédiat dans le navigateur/notebook
+    fig.show()

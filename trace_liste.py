@@ -1,62 +1,34 @@
-import csv
-import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
+import numpy as np
 
-# 1. Lecture du fichier sans pandas
-vent = []
-press = []
-#vort = []
-rmse = []
+# Données
+labels = ['Aladin 3s/4s', 'Aladin 3s/merra', 'Aladin 4s/merra']
+tt_domaine = [0.014, 0.045, 0.046]
+MDR = [0.02, 0.053, 0.057]
+box_sahara = [0.031, 0.101, 0.0884]
 
-with open('resultats_cyclogenese.txt', 'r') as f:
-    reader = csv.reader(f)
-    next(reader)  # Sauter l'en-tête
-    for row in reader:
-        #vort.append(float(row[0]))
-        press.append(float(row[0]))
-        vent.append(float(row[1]))
-        rmse.append(float(row[2]))
+x = np.arange(len(labels))  # Position des étiquettes
+width = 0.25  # Largeur des barres
 
+fig, ax = plt.subplots(figsize=(10, 6))
 
-# Conversion en tableaux numpy
-x = np.array(vent)
-y = np.array(press)
-z = np.array(rmse)/(200*200)
+# Création des barres
+rects1 = ax.bar(x - width, tt_domaine, width, label='tt_domaine', color='#3498db')
+rects2 = ax.bar(x, MDR, width, label='MDR', color='#e67e22')
+rects3 = ax.bar(x + width, box_sahara, width, label='box_sahara', color='#2ecc71')
 
-# 2. Création d'une grille régulière pour le lissage (interpolation)
-xi = np.linspace(x.min(), x.max(), 100)
-yi = np.linspace(y.min(), y.max(), 100)
-xi, yi = np.meshgrid(xi, yi)
+# Ajout des textes, titres et légendes
+ax.set_ylabel('Valeurs')
+ax.set_title('Comparaison des domaines par configuration Aladin')
+ax.set_xticks(x)
+ax.set_xticklabels(labels)
+ax.legend()
 
-# Interpolation des valeurs de RMSE sur la grille
-zi = griddata((x, y), z, (xi, yi), method='cubic')
+# Optionnel : ajouter les valeurs au-dessus des barres
+ax.bar_label(rects1, padding=3)
+ax.bar_label(rects2, padding=3)
+ax.bar_label(rects3, padding=3)
 
-# 3. Tracé
-plt.figure(figsize=(12, 8))
-
-# Création des contours remplis (la "chaleur")
-# 'viridis_r' ou 'plasma_r' sont bien car le RMSE est "mieux" quand il est bas
-cp = plt.contourf(xi, yi, zi, levels=20, cmap='turbo')
-plt.colorbar(cp, label='RMSE')
-
-# Ajout des lignes de contour pour plus de lisibilité
-contours = plt.contour(xi, yi, zi, levels=10, colors='white', alpha=0.3)
-plt.clabel(contours, inline=True, fontsize=8)
-
-# Affichage des points de mesure réels
-plt.scatter(x, y, c='red', s=20, edgecolors='black', label='Points testés')
-
-# Identification du point minimum (le meilleur réglage)
-idx_min = np.argmin(z)
-plt.plot(x[idx_min], y[idx_min], 'r*', markersize=15, label=f'Minimum (RMSE: {z[idx_min]:.2f} pour vort={y[idx_min]:.1f}, vent={x[idx_min]:.1f})')
-
-plt.xlabel('Seuil Vent ($m.s^{-1}$)')
-plt.ylabel('Seuil Pression ($hPa$)')
-plt.title('Surface d\'erreur (RMSE) en fonction des seuils de détection')
-plt.legend()
-plt.grid(alpha=0.2)
-
-plt.gca().invert_yaxis()
+fig.tight_layout()
 
 plt.show()

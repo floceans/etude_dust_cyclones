@@ -16,12 +16,12 @@ if __name__ == "__main__":
     
     # 3. Visualisations
     # La carte
-    plot_aod_map(aod_data, "aladin")
+    #plot_aod_map(aod_data, "aladin")
     
     # La série temporelle (moyenne mensuelle)
     plot_time_series(aod_data, 'aladin')
     
     # L'histogramme
-    plot_histogram(aod_data, 'aladin')
+    #plot_histogram(aod_data, 'aladin')
     
     plt.show()

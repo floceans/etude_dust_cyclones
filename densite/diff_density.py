@@ -17,7 +17,7 @@ def main():
     yearmax = int(sys.argv[2]) if len(sys.argv) > 2 else 2024
 
     # --- Configuration de la grille commune ---
-    lonmin, lonmax, latmin, latmax = -105, 5, 5, 35
+    lonmin, lonmax, latmin, latmax = -105, 5, 5, 30
     xi, yi = np.mgrid[lonmin:lonmax:200j, latmin:latmax:200j]
 
     # --- Calcul des deux densités ---

@@ -2,6 +2,8 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import csv
 from datetime import datetime
+import numpy as np
+
 
 def mask_time(da, year_min, year_max, juin_oct=False):
     """Masque les données sur la plage d'années ET optionnellement sur les mois."""
@@ -208,4 +210,46 @@ def plot_climatology(aod_clim, cy_counts, title):
 
     plt.title(title)
     ax1.grid(axis='y', linestyle='--', alpha=0.3)
+    fig.tight_layout()
+
+
+def plot_combined_climatology(aod_obs, cy_obs, aod_sim, cy_sim, year_min, year_max):
+    months = np.arange(1, 13)
+    month_names = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+    width = 0.35  # Largeur des barres
+
+    fig, ax1 = plt.subplots(figsize=(12, 7))
+
+    # --- AXE 1 : CYCLONES (BARRES) ---
+    # On décale les barres de l'observation à gauche et ALADIN à droite
+    rects1 = ax1.bar(months - width/2, cy_obs, width, color='steelblue', alpha=0.6, label='Cyclones (IBTrACS)')
+    rects2 = ax1.bar(months + width/2, cy_sim, width, color='indianred', alpha=0.6, label='Cyclones (ALADIN)')
+    
+    ax1.set_xlabel('Mois')
+    ax1.set_ylabel('Nombre moyen de cyclones', color='black', fontsize=12)
+    ax1.set_xticks(months)
+    ax1.set_xticklabels(month_names)
+    ax1.set_ylim(0, max(max(cy_obs), max(cy_sim)) * 1.2) # Marge en haut
+
+    # --- AXE 2 : AOD (LIGNES) ---
+    ax2 = ax1.twinx()
+    line1 = ax2.plot(months, aod_obs.values, color='blue', marker='o', linewidth=2, 
+                     label='AOD (MERRA)', linestyle='-')
+    line2 = ax2.plot(months, aod_sim.values, color='red', marker='s', linewidth=2, 
+                     label='AOD (ALADIN Dust)', linestyle='--')
+    
+    ax2.set_ylabel('Aerosol Optical Depth (AOD)', color='black', fontsize=12)
+    # On synchronise les limites de l'AOD pour que la comparaison soit juste
+    max_aod = max(float(aod_obs.max()), float(aod_sim.max()))
+    ax2.set_ylim(0, max_aod * 1.2)
+
+    # --- ESTHÉTIQUE ET LÉGENDE ---
+    plt.title(f"Climatologie mensuelle AOD & nbr cyclones, OBS vs ALADIN ({year_min}-{year_max})", fontsize=14)
+    ax1.grid(axis='y', linestyle='--', alpha=0.3)
+    
+    # Fusion des légendes
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2, loc='upper left', ncol=2)
+
     fig.tight_layout()

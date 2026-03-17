@@ -9,7 +9,7 @@ from func import fichier_source, indice_global_cyclogenese, get_density
 
 
 
-file = 'aladin'
+file = 'ibtracs'
 yearmin = 1960
 yearmax = 2024
 

@@ -8,7 +8,7 @@ from func import fichier_source, indice_global_cyclogenese, get_density_cyclogen
 AN_MIN = 1960
 AN_MAX = 2024
 SVORT = 0 #10,25, 100 à tester selon Fabrice
-SVENT = 28
+SVENT = 26
 SPRESS = 1005
 
 file = 'aladin'

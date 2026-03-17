@@ -7,75 +7,43 @@ import sys
 import cartopy.crs as ccrs
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
-'''
-1er arg -> année début, defaut : 2020
-2eme arg -> annee fin, defaut : 2022
-3eme arg -> seuil pression maximale dans plot, defaut : 1000
-'''
-
-
-###
-#appliquer seuil sur vorticité sur traj relaxés rel10
-#impacts SAL sur cyclogenese  => c quoi cyclogenese sur aladin (reel vmax>17m/s), seuil sur vorticité ?
-# carte densité cyclogenese, trouver seuil vorticité
-# comparer densité ibtracks & aladin
-# run de controle :forcé par era5 avec effets aerosols
-# sans effet : nora dust, 
-###
-
+# --- Configuration et Seuils ---
 data = 'aladin'
 yearmin = 2018
 yearmax = 2022
-seuil_p = 1010
+seuil_p = 1005
 
+ATLANTIC_LON_MIN, ATLANTIC_LON_MAX = -95.0, -10.0
+ATLANTIC_LAT_MIN, ATLANTIC_LAT_MAX = 5.0, 30.0
 
-# --- Gestion des args ---
+# --- Gestion des arguments CLI ---
 if len(sys.argv) > 1 and sys.argv[1] == 'aladin':
-    filename = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv" 
-elif len(sys.argv) > 1 and sys.argv[1] == 'ibtracks':
-    filename = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/ibtracs_transformed_1960_2024.csv" 
-elif data == 'aladin':
-    filename = "ALADIN_rel10_1960_2024.csv"
-elif data == 'ibtracks':
-    filename = "/home/florent/Documents/CNRM/git/etude_dust_cyclones/ibtracs_transformed_1960_2024.csv"
+    filename = "ALADIN_rel10_1960_2024.csv" 
+elif len(sys.argv) > 1 and sys.argv[1] == 'ibtracs':
+    filename = "ibtracs_transformed_1960_2024.csv" 
 else:
-    print("data aladin par défaut")
-    filename = '/home/florent/Documents/CNRM/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv' # Valeur par défaut
+    filename = "ibtracs_transformed_1960_2024.csv" if data == 'ibtracs' else "ALADIN_rel10_1960_2024.csv"
 
 annee_debut = int(sys.argv[2]) if len(sys.argv) > 2 else yearmin
-
-# Si len(sys.argv) > 2, on prend l'argument 2, sinon on met 1961 par défaut
 annee_fin = int(sys.argv[3]) if len(sys.argv) > 3 else yearmax
-
 seuil_p = int(sys.argv[4]) if len(sys.argv) > 4 else seuil_p
 
-# Zone Atlantique Nord pour le filtrage (activable au besoin)
-ATLANTIC_LON_MIN, ATLANTIC_LON_MAX = -95.0, -10.0
-ATLANTIC_LAT_MIN, ATLANTIC_LAT_MAX = 5.0, 35.0
-
-def is_in_atlantic(lon, lat):
-    # Pour activer le filtre, décommente la ligne ci-dessous
-    # return (ATLANTIC_LON_MIN <= lon <= ATLANTIC_LON_MAX and ATLANTIC_LAT_MIN <= lat <= ATLANTIC_LAT_MAX)
-    return True
-
-tracks = {}
+tracks_raw = {}
 
 # --- Lecture du CSV ---
 if not os.path.exists(filename):
     print(f"Erreur : Le fichier '{filename}' est introuvable.")
     sys.exit()
 
-print(f"Lecture de {filename} pour la période {annee_debut}-{annee_fin}...")
+print(f"Lecture de {filename}...")
 
 with open(filename, 'r', encoding='utf-8') as f:
     reader = csv.DictReader(f)
     for row in reader:
-        # On récupère l'année de la ligne (nom de colonne à adapter si différent, ex: 'year')
-        # Si ton CSV n'a pas de colonne 'year', retire cette condition de filtrage
         try:
             row_year = int(float(row.get('year', row.get('date', annee_debut)[:4]))) 
         except:
-            row_year = annee_debut # Fallback
+            row_year = annee_debut
 
         if not (annee_debut <= row_year <= annee_fin):
             continue
@@ -84,27 +52,53 @@ with open(filename, 'r', encoding='utf-8') as f:
         if pmin > seuil_p:
             continue
 
-        # Création d'un ID unique par système
         track_id = f"{row_year}_{row['numtc']}"
-        
-        if track_id not in tracks:
-            tracks[track_id] = {'lat': [], 'lon': [], 'press': []}
+        if track_id not in tracks_raw:
+            tracks_raw[track_id] = {'lat': [], 'lon': [], 'press': []}
         
         lon_val = float(row['lon'])
         if lon_val > 180: lon_val -= 360 
         
-        tracks[track_id]['lon'].append(lon_val)
-        tracks[track_id]['lat'].append(float(row['lat']))
-        tracks[track_id]['press'].append(pmin)
+        tracks_raw[track_id]['lon'].append(lon_val)
+        tracks_raw[track_id]['lat'].append(float(row['lat']))
+        tracks_raw[track_id]['press'].append(pmin)
 
-# --- Filtrage des trajectoires vides ou hors zone ---
-final_tracks = {tid: data for tid, data in tracks.items() 
-                if len(data['lon']) > 1 and is_in_atlantic(data['lon'][0], data['lat'][0])}
+# --- Filtrage STRICT par zone (Point par Point) ---
+final_tracks = {}
+total_points_in_zone = 0
 
-print(f"Nombre de trajectoires à afficher : {len(final_tracks)}")
+for tid, tdata in tracks_raw.items():
+    filtered_lon = []
+    filtered_lat = []
+    filtered_press = []
+    
+    for i in range(len(tdata['lon'])):
+        ln, lt, pr = tdata['lon'][i], tdata['lat'][i], tdata['press'][i]
+        
+        # Vérification si le point est dans le rectangle
+        if (ATLANTIC_LON_MIN <= ln <= ATLANTIC_LON_MAX) and (ATLANTIC_LAT_MIN <= lt <= ATLANTIC_LAT_MAX):
+            filtered_lon.append(ln)
+            filtered_lat.append(lt)
+            filtered_press.append(pr)
+            
+    # On ne garde la trajectoire que si elle possède au moins 2 points dans la zone (pour tracer une ligne)
+    if len(filtered_lon) >= 2:
+        final_tracks[tid] = {
+            'lon': filtered_lon,
+            'lat': filtered_lat,
+            'press': filtered_press
+        }
+        total_points_in_zone += len(filtered_lon)
+
+# --- Calcul des statistiques ---
+num_trajs = len(final_tracks)
+avg_pts = total_points_in_zone / num_trajs if num_trajs > 0 else 0
+
+print(f"Nombre de trajectoires impactant la zone : {num_trajs}")
+print(f"Nombre moyen de points par trajectoire dans le domaine : {avg_pts:.2f}")
 
 if not final_tracks:
-    print("Aucune donnée ne correspond aux critères.")
+    print("Aucune donnée dans la zone avec les seuils actuels.")
     sys.exit()
 
 # --- Création de la carte ---
@@ -121,24 +115,23 @@ gl.right_labels = False
 gl.xformatter = LongitudeFormatter()
 gl.yformatter = LatitudeFormatter()
 
-# --- Tracé des trajectoires ---
-# Normalisation des couleurs basée sur la pression min/max trouvée
+# Normalisation
 all_pressures = [p for t in final_tracks.values() for p in t['press']]
 norm = plt.Normalize(min(all_pressures), max(all_pressures))
 
+# --- Tracé ---
 for tid, data in final_tracks.items():
     x = np.array(data['lon'])
     y = np.array(data['lat'])
     p = np.array(data['press'])
 
-    # Transformation pour LineCollection (segments de couleurs)
     points = np.array([x, y]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
     
     lc = LineCollection(segments, cmap='jet_r', norm=norm, transform=ccrs.PlateCarree())
     lc.set_array(p[:-1])
     lc.set_linewidth(1.5)
-    lc.set_alpha(0.7)
+    lc.set_alpha(0.8)
     ax.add_collection(lc)
 
 # Barre de couleur
@@ -146,10 +139,11 @@ sm = plt.cm.ScalarMappable(cmap='jet_r', norm=norm)
 cb = plt.colorbar(sm, ax=ax, orientation='vertical', pad=0.02, aspect=30, shrink=0.8)
 cb.set_label('Pression centrale (hPa)')
 
-plt.title(f"Trajectoires {annee_debut}-{annee_fin} (Pmin < {seuil_p} hPa)\nSource: {os.path.basename(filename)}")
+plt.title(f"Trajectoires {annee_debut}-{annee_fin} (Uniquement points dans le domaine)\n"
+          f"Moyenne : {avg_pts:.1f} pts/traj | Source: {os.path.basename(filename)}")
 
 # Sauvegarde
-output_name = f"plot_trajs_{annee_debut}_{annee_fin}.png"
+output_name = f"plot_trajs_filtered_{annee_debut}_{annee_fin}.png"
 plt.savefig(output_name, dpi=200, bbox_inches='tight')
-print(f"Graphique sauvegardé sous : {output_name}")
+print(f"Graphique sauvegardé : {output_name}")
 plt.show()

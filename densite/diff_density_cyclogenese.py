@@ -27,7 +27,7 @@ def main():
 
 
     # config grille pr deux densités
-    lonmin, lonmax, latmin, latmax = -105, 5, 0, 35
+    lonmin, lonmax, latmin, latmax = -105, 5, 0, 25
     #-105, 5, 5, 35 #pr tt domaine - 
     #mdr -60, -15, 5, 20 #
     #mdr++ -105, 5, 0, 25
@@ -67,7 +67,7 @@ def main():
     # Mais si tu tiens à 'turbo', attention : elle ne montre pas bien le zéro.
     # 'RdBu_r' : Rouge = Surplus, Bleu = Déficit.
     vmax = np.max(np.abs(zi_diff))
-    levels = np.linspace(-5, 5, 21)
+    levels = np.linspace(-3, 3, 21)
 
     cf = ax.contourf(xi, yi, zi_diff, levels=levels, cmap='RdBu_r', 
                      vmin=-vmax, vmax=vmax, transform=proj, extend='both')
