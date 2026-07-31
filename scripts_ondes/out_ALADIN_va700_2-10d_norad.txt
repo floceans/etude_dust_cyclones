@@ -1,0 +1,19 @@
+ Copyright (C) 1995-2019 - All Rights Reserved
+ University Corporation for Atmospheric Research
+ NCAR Command Language Version 6.6.2
+ The use of this software is governed by a License Agreement.
+ See http://www.ncl.ucar.edu/ for more details.
+fatal:["Execute.c":7762]:va700 is undefined
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 1 in file /tmp/ncl9059.ncl
+
+fatal:["Execute.c":7762]:norad is undefined
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 3 in file /tmp/ncl9059.ncl
+
+fatal:syntax error: line 6 in file /tmp/ncl9059.ncl before or near _ERA5_evaluation_r1i1p1f1_CNRM_CNRM 
+fname=_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM
+-----------------------------------------------^
+
+fatal:Variable (EXP) is undefined
+fatal:["Execute.c":8637]:Execute: Error occurred at or near line 22 in file filter_timescales_ALADIN_y.ncl
+
+

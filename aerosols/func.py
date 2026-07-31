@@ -5,6 +5,11 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import plotly.graph_objects as go
 from scipy.interpolate import griddata
+import pandas as pd
+
+import matplotlib.ticker as mticker
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+
 
 def mask_time(da, year_min=2021, year_max=2024):
     """Masque les données en dehors de la plage temporelle spécifiée."""
@@ -19,7 +24,7 @@ def mask_atlantic(da):
     Applique un masque sur une grille 2D (curvilinéaire).
     """
     lat_min, lat_max = 5, 35
-    lon_min, lon_max = -105, 5
+    lon_min, lon_max = -105, 15
     
     # On identifie les noms réels des coordonnées de latitude et longitude
     # Dans ton fichier ALADIN, c'est probablement 'lat' et 'lon' (ou 'latitude'/'longitude')
@@ -78,40 +83,79 @@ def print_stats(da, filename):
     print(f"Ecart-type: {da.std().item():.4f}")
     print(f"Min / Max : {da.min().item():.4f} / {da.max().item():.4f}")
 
+
 def plot_aod_map(da, filename):
-    """Carte adaptée aux grilles 2D."""
-    # Moyenne temporelle si nécessaire
+    """Carte AOD avec échelle non-linéaire pour faire ressortir les faibles valeurs (> 0.05)."""
+    # --- 1. PRÉPARATION DES DONNÉES ---
     data_to_plot = da.mean(dim="time") if "time" in da.dims else da
-    
-    fig = plt.figure(figsize=(11, 6))
+
+    # --- 2. TRACÉ ET FIGURE ---
+    fig = plt.figure(figsize=(14, 8))
     ax = plt.axes(projection=ccrs.PlateCarree())
 
-    # Pour les grilles 2D, on doit passer les coordonnées explicitement à xarray.plot
+    # Norme étirant les faibles valeurs (gamma=0.5 rend 0.05 bien distinct de 0)
+    #norm = mcolors.PowerNorm(gamma=0.5, vmin=0, vmax=0.65)
+
+    # Affichage des données
     im = data_to_plot.plot(
         ax=ax, 
-        x="lon", y="lat", # Indispensable pour les grilles curvilinéaires
+        x="lon", y="lat", 
         transform=ccrs.PlateCarree(),
-        add_colorbar=True,
-        vmin=0, vmax=0.75,  # Ajuste selon tes données
-        cbar_kwargs={'label': 'AOD', 'pad': 0.02, 'shrink': 0.8},
-        cmap="YlOrBr", robust=True
+        add_colorbar=False,  
+        #norm=norm,            # Applique l'étalement dynamique des couleurs
+        cmap="jet", 
+        robust=True
     )
 
-    ax.add_feature(cfeature.COASTLINE, linewidth=0.8, zorder=3)
-    #ax.add_feature(cfeature.LAND, facecolor='#f0f0f0', zorder=2)
+    # --- 3. AJOUT DES ISOLIGNES ---
+    levels = np.arange(0, 0.65 + 0.001, 0.05)
+    linestyles = ['--' if val < 0 else '-' for val in levels]
     
-    # Définition auto des limites basées sur les données masquées
+    cs = ax.contour(
+        data_to_plot["lon"], data_to_plot["lat"], data_to_plot,
+        levels=levels,
+        colors='black',
+        linestyles=linestyles,
+        linewidths=1.2,
+        transform=ccrs.PlateCarree(),
+        alpha = 0.5,
+        zorder=4
+    )
+    ax.clabel(cs, inline=True, fontsize=12, fmt='%.2f', colors='black')
+
+    # --- 4. COSMÉTIQUE DE LA CARTE ---
+    ax.add_feature(cfeature.COASTLINE, linewidth=0.8, zorder=3)
+    ax.add_feature(cfeature.BORDERS, linestyle=':', zorder=3)
+    
     lon_min, lon_max = da.lon.min().item(), da.lon.max().item()
     lat_min, lat_max = da.lat.min().item(), da.lat.max().item()
     ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
-    
-    gl = ax.gridlines(draw_labels=True, linestyle='--', alpha=0.4)
+
+    # --- 5. CONFIGURATION DES AXES ET GRILLE ---
+    gl = ax.gridlines(draw_labels=True, linestyle='--', alpha=0.4, zorder=2)
     gl.top_labels = gl.right_labels = False
+    
+    gl.xlocator = mticker.MultipleLocator(20)
+    gl.ylocator = mticker.MultipleLocator(5)
+    
+    gl.xformatter = LongitudeFormatter()
+    gl.yformatter = LatitudeFormatter()
+    
+    gl.xlabel_style = {'size': 25}
+    gl.ylabel_style = {'size': 25}
 
-    plt.title(f"Carte AOD moyenne (zone Atlantique - {filename})", pad=15, fontweight='bold')
-    plt.tight_layout()
+    # --- 6. COLORBAR HORIZONTALE AVEC GRADUATIONS CIBLÉES ---
+    cbar = plt.colorbar(im, ax=ax, orientation='horizontal', pad=0.12, shrink=0.85, aspect=35)
+    cbar.set_label('Dust-AOD', fontsize=24)
+    cbar.ax.tick_params(labelsize=24)
+    
+    # Graduations explicites sur la colorbar pour bien repérer 0, 0.05, 0.1, etc.
+    cbar.set_ticks([0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.65])
+
+    # --- 7. TITRE ---
+    plt.title(f"Carte AOD moyenne (zone Atlantique - {filename})", pad=15, fontweight='bold', fontsize=24)
+    
     return fig
-
 
 def plot_aod_diff_map(da1, da2, name1, name2, vlimit=0.1):
     # 1. Préparation des données (Moyenne temporelle)
@@ -119,67 +163,244 @@ def plot_aod_diff_map(da1, da2, name1, name2, vlimit=0.1):
     m2 = da2.mean(dim="time").squeeze() if "time" in da2.dims else da2.squeeze()
 
     # 2. REGRIDDING (Interpolation de m2 sur la grille y, x de m1)
-    # Pour les grilles 2D (lat/lon en matrices), on utilise interp_like sur les dimensions y, x
-    # On part du principe que m1 est ta référence (ex: ALADIN)
     try:
         m2_resampled = m2.interp(y=m1.y, x=m1.x, method="linear")
     except Exception:
         m2_resampled = m2.interp(lat=m1.lat, lon=m1.lon, method="linear")
-        # Si les noms de dimensions diffèrent entre les deux fichiers
-        #m2_resampled = m2.interp_like(m1, method="linear")
 
     # 3. Calcul de la différence
-    diff_total = m1 - m2_resampled
-    
-    # On s'assure que les coordonnées lat/lon de m1 sont bien rattachées au résultat
+    diff_total = m1*0.9 - m2_resampled
     diff_total = diff_total.assign_coords(lat=m1["lat"], lon=m1["lon"])
 
-    # --- SÉLECTION DE LA ZONE (5N-30N, 100W-0W) ---
-    lat_min, lat_max = 10, 30
-    lon_min, lon_max = -15, 5
+    # --- SÉLECTION DE LA ZONE (0N-40N, 120W-40E) ---
+    lat_min, lat_max = 5, 30
+    lon_min, lon_max = -100, 5
 
-    # Masquage géographique robuste pour grilles 2D
     mask = (diff_total["lat"] >= lat_min) & (diff_total["lat"] <= lat_max) & \
            (diff_total["lon"] >= lon_min) & (diff_total["lon"] <= lon_max)
     
     diff_zone = diff_total.where(mask, drop=True)
 
-    # --- CALCUL DU RMSE SUR LA ZONE ---
-    # On ignore les NaNs (zones hors masque ou sans données)
+    # --- CALCUL DU RMSE ---
     rmse_val = np.sqrt((diff_zone**2).mean(skipna=True)).values
     print(f"--- Statistiques [{name1} vs {name2}] ---")
     print(f"RMSE Zone ({lat_min}, {lat_max}N - {lon_min}, {lon_max}W): {rmse_val:.4f}")
 
     # 4. TRACÉ
-    fig = plt.figure(figsize=(11, 6))
+    fig = plt.figure(figsize=(14, 8)) # Légèrement agrandi pour accueillir la colorbar en bas
     ax = plt.axes(projection=ccrs.PlateCarree())
 
-    # Utilisation de x="lon" et y="lat" car ce sont des coordonnées 2D
+    # Affichage principal (sans colorbar automatique)
     im = diff_zone.plot.pcolormesh(
         ax=ax, 
         x="lon", y="lat", 
         transform=ccrs.PlateCarree(),
-        add_colorbar=True,
+        add_colorbar=False, # Désactivé pour la gérer manuellement ci-dessous
         vmin=-vlimit, vmax=vlimit,
-        cbar_kwargs={'label': f'Différence AOD ({name1} - {name2})', 'pad': 0.02, 'shrink': 0.8},
         cmap="RdBu_r", 
         robust=True
     )
 
+    # --- AJOUT DES ISOLIGNES (Tous les 0.05) ---
+    # Génération des niveaux de -vlimit à +vlimit par pas de 0.05
+    levels = np.arange(-vlimit, vlimit + 0.001, 0.05)
+    # Définition des styles : '--' (dashed) pour le négatif, '-' (solid) pour le reste
+    linestyles = ['--' if val < 0 else '-' for val in levels]
+    
+    cs = ax.contour(
+        diff_zone["lon"], diff_zone["lat"], diff_zone,
+        levels=levels,
+        colors='black',
+        linestyles=linestyles,
+        linewidths=1.2,
+        transform=ccrs.PlateCarree(),
+        zorder=4
+    )
+    # Affichage des valeurs sur les isolignes
+    ax.clabel(cs, inline=True, fontsize=12, fmt='%.2f', colors='black')
+
     # Cosmétique de la carte
     ax.add_feature(cfeature.COASTLINE, linewidth=0.8, zorder=3)
     ax.add_feature(cfeature.BORDERS, linestyle=':', alpha=0.5, zorder=3)
-    
-    # Zoom sur la zone
     ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
     
-    gl = ax.gridlines(draw_labels=True, linestyle='--', alpha=0.4)
+    # --- CONFIGURATION DES AXES (Police taille 25) ---
+    gl = ax.gridlines(draw_labels=True, linestyle='--', alpha=0.4, zorder=2)
     gl.top_labels = gl.right_labels = False
+    
+    # Configuration des intervalles (ex: pas de 20° en long, 10° en lat)
+    gl.xlocator = mticker.MultipleLocator(20)
+    gl.ylocator = mticker.MultipleLocator(5)
+    
+    # Formatage des étiquettes (N/S, E/W)
+    gl.xformatter = LongitudeFormatter()
+    gl.yformatter = LatitudeFormatter()
+    
+    # Application de la taille de police 25 sur les axes
+    gl.xlabel_style = {'size': 25}
+    gl.ylabel_style = {'size': 25}
 
-    plt.title(f"Différence AOD : {name1} - {name2}\nRMSE: {rmse_val:.4f}", pad=15, fontweight='bold')
-    plt.tight_layout()
+    # --- COLORBAR HORIZONTALE (Police taille 24) ---
+    # 'pad' augmenté à 0.12 pour éviter que la colorbar chevauche les étiquettes de l'axe X
+    cbar = plt.colorbar(im, ax=ax, orientation='horizontal', pad=0.12, shrink=0.85, aspect=35)
+    cbar.set_label(f'Différence AOD ({name1} - {name2})', fontsize=24)
+    cbar.ax.tick_params(labelsize=24)
+
+    # --- TITRE (Police taille 24) ---
+    plt.title(f"Différence AOD : {name1} - {name2}\nRMSE: {rmse_val:.4f}", pad=15, fontweight='bold', fontsize=24)
     
     return fig
+
+def plot_aod_map_years(da, filename, years_list):
+    """
+    Carte adaptée aux grilles 2D.
+    Filtre et moyenne l'AOD uniquement pour une liste d'années spécifiée.
+    Ajoute des isolignes et applique une taille de police de 21.
+    """
+    # --- 1. Filtrage sur les années sélectionnées ---
+    if "time" in da.dims:
+        # Sélection des données où l'année appartient à la liste passée en argument
+        da_filtered = da.sel(time=da.time.dt.year.isin(years_list))
+        data_to_plot = da_filtered.mean(dim="time")
+    else:
+        data_to_plot = da
+        print(" Attention : Pas de dimension 'time' détectée. Filtrage par année impossible.")
+    
+    # --- 2. Configuration de la figure et de la police ---
+    font_size = 21
+    # On agrandit légèrement la figure (13, 8) pour que la police 21 respire
+    fig = plt.figure(figsize=(13, 8))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+
+    # --- 3. Affichage du fond (AOD) ---
+    im = data_to_plot.plot(
+        ax=ax, 
+        x="lon", y="lat", 
+        transform=ccrs.PlateCarree(),
+        add_colorbar=False,  # On désactive la colorbar auto pour mieux la gérer en taille 21
+        vmin=0, vmax=0.65,  
+        cmap="YlOrBr", robust=True
+    )
+
+    # --- 4. Ajout des isolignes (Contours) ---
+    # On utilise la méthode contour de xarray adaptée aux grilles 2D
+    contours = data_to_plot.plot.contour(
+        ax=ax,
+        x="lon", y="lat",
+        transform=ccrs.PlateCarree(),
+        colors="black",       # Couleur des lignes
+        linewidths=1.0,       # Épaisseur des lignes
+        levels=5,             # Nombre d'isolignes automatiques (tu peux passer une liste ex: [0.1, 0.3, 0.5])
+    )
+    # Optionnel : Ajouter les étiquettes de valeurs sur les isolignes
+    ax.clabel(contours, inline=True, fmt='%.2f', fontsize=font_size - 6)
+
+    # --- 5. Habillage de la carte ---
+    ax.add_feature(cfeature.COASTLINE, linewidth=1.0, zorder=3)
+    
+    # Définition auto des limites basées sur les données
+    lon_min, lon_max = da.lon.min().item(), da.lon.max().item()
+    lat_min, lat_max = da.lat.min().item(), da.lat.max().item()
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+    
+    # Gestion des lignes de grille et de leur taille de police
+    gl = ax.gridlines(draw_labels=True, linestyle='--', alpha=0.4)
+    gl.top_labels = gl.right_labels = False
+    gl.xlabel_style = {'size': font_size}
+    gl.ylabel_style = {'size': font_size}
+
+    # --- 6. Ajout de la Colorbar personnalisée ---
+    cbar = fig.colorbar(im, ax=ax, pad=0.03, shrink=0.8, orientation='vertical')
+    cbar.set_label('AOD', fontsize=font_size)
+    cbar.ax.tick_params(labelsize=font_size - 2)  # Graduations légèrement plus petites pour l'élégance
+
+    # --- 7. Titre dynamique ---
+    # Transforme la liste [1999, 2001] en chaîne "1999, 2001"
+    years_str = ", ".join(map(str, sorted(years_list)))
+    plt.title(f"Dust-AOD Moyenne \n{filename}", pad=20, fontweight='bold', fontsize=font_size)
+    
+    plt.tight_layout()
+    return fig
+
+
+
+def plot_aod_diff_map_year(da1, years_list1, da2, years_list2, label1="10y ACE + fort", label2="10y ACE + faible", vlimit=0.1):
+    """
+    Calcule et affiche la différence (Map1 - Map2) entre deux sélections d'années.
+    Gère automatiquement l'alignement des grilles si les modèles sont différents.
+    """
+    # --- 1. Extraction et calcul des moyennes pour chaque période ---
+    sub_da1 = da1.sel(time=da1.time.dt.year.isin(years_list1)).mean(dim="time")
+    sub_da2 = da2.sel(time=da2.time.dt.year.isin(years_list2)).mean(dim="time")
+    
+    # --- 2. Sécurité : Alignement des grilles (si comparaison Aladin vs Merra) ---
+    # Si les dimensions diffèrent (ex: (x,y) vs (lat,lon)), on rééchantillonne da2 sur la grille de da1
+    if sub_da1.shape != sub_da2.shape:
+        print("🔄 Grilles différentes détectées. Interpellation de la seconde carte sur la première...")
+        # Si les coordonnées de da2 sont en 1D (comme Merra), on peut interpoler facilement
+        if 'lat' in sub_da2.dims and 'lon' in sub_da2.dims:
+            sub_da2 = sub_da2.interp(lat=sub_da1.lat, lon=sub_da1.lon, method="linear")
+        else:
+            # Cas des grilles curvilignes complexes
+            sub_da2 = sub_da2.interp_like(sub_da1, method="linear")
+
+    # --- 3. Calcul de la différence (Carte 1 - Carte 2) ---
+    diff = sub_da1 - sub_da2
+
+    # --- 4. Configuration graphique (Police 21) ---
+    font_size = 21
+    fig = plt.figure(figsize=(14, 9))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+
+    # --- 5. Affichage de la différence ---
+    # 'center=0' force une échelle symétrique (ex: -0.2 à +0.2) et choisit un cmap divergent
+    im = diff.plot(
+        ax=ax, 
+        x="lon", y="lat", 
+        transform=ccrs.PlateCarree(),
+        add_colorbar=False,
+        center=0,          # IMPORTANT : centre la palette sur 0
+        cmap="RdBu_r",     # Rouge = Positif (Plus d'AOD), Bleu = Négatif (Moins d'AOD)
+        robust=True
+    )
+
+    # --- 6. Ajout des isolignes de la différence ---
+    contours = diff.plot.contour(
+        ax=ax,
+        x="lon", y="lat",
+        transform=ccrs.PlateCarree(),
+        colors="black",
+        linewidths=1.2,
+        levels=5
+    )
+    ax.clabel(contours, inline=True, fmt='%.2f', fontsize=font_size - 6)
+
+    # --- 7. Habillage de la carte ---
+    ax.add_feature(cfeature.COASTLINE, linewidth=1.0, zorder=3)
+    
+    # Limites géographiques basées sur da1
+    lon_min, lon_max = da1.lon.min().item(), da1.lon.max().item()
+    lat_min, lat_max = da1.lat.min().item(), da1.lat.max().item()
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+    
+    # Grille et étiquettes axes
+    gl = ax.gridlines(draw_labels=True, linestyle='--', alpha=0.4)
+    gl.top_labels = gl.right_labels = False
+    gl.xlabel_style = {'size': font_size}
+    gl.ylabel_style = {'size': font_size}
+
+    # --- 8. Colorbar personnalisée ---
+    cbar = fig.colorbar(im, ax=ax, pad=0.03, shrink=0.8)
+    cbar.set_label('Δ dust-AOD', fontsize=font_size)
+    cbar.ax.tick_params(labelsize=font_size - 2)
+
+    # --- 9. Titre de la carte ---
+    title_text = f"Δ dust-AOD : {label1} − {label2}"
+    plt.title(title_text, pad=20, fontweight='bold', fontsize=font_size)
+    
+    plt.tight_layout()
+    return fig
+
 
 def plot_time_series(da, filename):
     """Série temporelle sur les dimensions x, y."""
@@ -239,16 +460,19 @@ def plot_histogram(da, filename):
 
     plt.tight_layout()
 
+
 def plot_climatology_bars(datasets_dict, title="Climatologie Mensuelle de l'AOD"):
     """
-    Trace un graphique à bâtons comparatif de la climatologie mensuelle.
+    Trace un graphique à bâtons comparatif de la climatologie mensuelle
+    avec de grandes polices synchronisées sur les cartes.
     datasets_dict : dict sous forme {'Nom du dataset': DataArray}
     """
     months = np.arange(1, 13)
-    month_names = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 
-                   'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+    month_names = ['J', 'F', 'M', 'A', 'M', 'J', 
+                   'J', 'A', 'S', 'O', 'N', 'D']
     
-    plt.figure(figsize=(12, 6))
+    # Figure agrandie à 14x8 pour accommoder les textes volumineux
+    fig, ax = plt.subplots(figsize=(14, 8))
     
     # Paramètres pour les barres groupées
     n_datasets = len(datasets_dict)
@@ -257,27 +481,41 @@ def plot_climatology_bars(datasets_dict, title="Climatologie Mensuelle de l'AOD"
     
     for i, (label, da) in enumerate(datasets_dict.items()):
         # 1. Moyenne spatiale (sur lat et lon)
-        # On utilise .mean() sur les dimensions spatiales
         spatial_mean = da.mean(dim=da.dims[1:], skipna=True)
         
         # 2. Moyenne par mois (Climatologie)
         climatology = spatial_mean.groupby('time.month').mean()
         
-        # S'assurer que tous les mois sont présents (au cas où il manque des données)
+        # S'assurer que tous les mois sont présents
         values = [climatology.sel(month=m).values if m in climatology.month else 0 for m in months]
         
         # 3. Positionnement des barres sur l'axe X
         pos = months - (total_width/2) + (i * bar_width) + (bar_width/2)
         
-        plt.bar(pos, values, width=bar_width, label=label)
+        ax.bar(pos, values, width=bar_width, label=label)
 
-    plt.xticks(months, month_names)
-    plt.xlabel('Mois')
-    plt.ylabel('AOD (550 nm)')
-    plt.title(title)
-    plt.legend()
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    # --- CONFIGURATION DES POLICES ET AXES ---
+    # Graduations de l'axe X
+    ax.set_xticks(months)
+    ax.set_xticklabels(month_names)
+
+    # Taille de police des chiffres/mois sur les axes (22 pt)
+    ax.tick_params(axis='both', which='major', labelsize=28)
+
+    # Noms des axes (24 pt)
+    ax.set_xlabel('Mois', fontsize=28, labelpad=10)
+    ax.set_ylabel('DAOD (550 nm)', fontsize=28, labelpad=10)
+
+    # Titre principal (24 pt, gras)
+    ax.set_title(title, fontsize=24, fontweight='bold', pad=15)
+
+    # Légende (20 pt)
+    ax.legend(fontsize=23, loc='best')
+
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
+    
+    return fig
 
 
 def plot_time_series_interactive(datasets_dict, output_file="comparaison_aod.html"):
@@ -323,3 +561,111 @@ def plot_time_series_interactive(datasets_dict, output_file="comparaison_aod.htm
     
     # Affichage immédiat dans le navigateur/notebook
     fig.show()
+
+
+def charger_et_moyenner(filepath, var_name, an_min, an_max, JJASO=False):
+    """
+    Charge, filtre (option JJASO), moyenne et réduit la résolution.
+    """
+    try:
+        ds = xr.open_dataset(filepath)
+        
+        if 'time' not in ds.dims:
+            raise ValueError(f"Pas de dimension 'time' dans {filepath}")
+
+        # 1. Sélection de la période d'années
+        ds_slice = ds[var_name].sel(time=slice(f"{an_min}-01-01", f"{an_max}-12-31"))
+        
+        # --- NOUVEAU : FILTRAGE SAISONNIER (Juin à Octobre) ---
+        if JJASO:
+            ds_slice = ds_slice.sel(time=ds_slice.time.dt.month.isin([6, 7, 8, 9, 10]))
+            print(f"Filtrage JJASO appliqué pour {var_name}.")
+
+        if ds_slice.time.size == 0:
+            raise ValueError(f"Aucune donnée pour les critères sélectionnés ({an_min}-{an_max}, JJASO={JJASO})")
+
+        # 2. Moyenne temporelle (Calculée sur les données filtrées)
+        ds_mean = ds_slice.mean(dim='time')
+
+        # 3. Réduction de résolution spatiale (Coarsening)
+        dim_lat = 'lat' if 'lat' in ds_mean.dims else 'y'
+        dim_lon = 'lon' if 'lon' in ds_mean.dims else 'x'
+
+        ds_coarse = ds_mean.coarsen({dim_lat: 3, dim_lon: 3}, boundary='trim').mean()
+
+        print(f"Traitement de {var_name} terminé. Grille : {ds_coarse.shape}")
+        return ds_coarse
+
+    except Exception as e:
+        print(f"Erreur lors du traitement de {filepath} : {e}")
+        return None
+
+
+def calculer_module(u, v):
+    """Calcule la vitesse du vent (norme)."""
+    # xarray gère automatiquement l'alignement des grilles
+    return np.sqrt(u**2 + v**2)
+
+def tracer_carte_vent_regionale(u_avg, v_avg, module, titre, zonage):
+    """
+    Génère une carte régionale :
+    - Option : Filtre les données de Juin à Octobre.
+    - Fond coloré (module) + Flèches (quiver).
+    """
+
+    u_plot = u_avg.mean(dim='time') if 'time' in u_avg.dims else u_avg
+    v_plot = v_avg.mean(dim='time') if 'time' in v_avg.dims else v_avg
+    mod_plot = module.mean(dim='time') if 'time' in module.dims else module
+
+    # --- 2. INITIALISATION CARTO ---
+    fig = plt.figure(figsize=(14, 8))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.set_extent(zonage, crs=ccrs.PlateCarree())
+
+    # Identification des coordonnées
+    lon_name = 'lon' if 'lon' in mod_plot.coords else 'longitude'
+    lat_name = 'lat' if 'lat' in mod_plot.coords else 'latitude'
+
+    # --- 3. TRACÉ DU MODULE (COULEUR) ---
+    im = mod_plot.plot.pcolormesh(
+        ax=ax, 
+        x=lon_name, y=lat_name,
+        transform=ccrs.PlateCarree(),
+        cmap='turbo',
+        add_colorbar=False,
+        shading='auto',
+        zorder=1
+    )
+
+    # --- 4. HABILLAGE ---
+    ax.add_feature(cfeature.COASTLINE, linewidth=1.5, edgecolor='black', zorder=2)
+    ax.add_feature(cfeature.BORDERS, linestyle=':', edgecolor='black', alpha=0.8, zorder=2)
+    
+    cbar = plt.colorbar(im, ax=ax, orientation='vertical', pad=0.03, shrink=0.7)
+    cbar.set_label('Vitesse du vent (m/s)', fontsize=12, fontweight='bold')
+
+    gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False,
+                      linewidth=0.5, color='gray', alpha=0.5, zorder=3)
+    gl.top_labels = False
+    gl.right_labels = False
+
+    # --- 5. FLÈCHES (QUIVER) ---
+    if mod_plot[lon_name].ndim == 2:
+        LON = mod_plot[lon_name].values
+        LAT = mod_plot[lat_name].values
+    else:
+        LON, LAT = np.meshgrid(mod_plot[lon_name].values, mod_plot[lat_name].values)
+
+    skip = 12
+    U_sub = u_plot.values[::skip, ::skip]
+    V_sub = v_plot.values[::skip, ::skip]
+    LON_sub = LON[::skip, ::skip]
+    LAT_sub = LAT[::skip, ::skip]
+
+    ax.quiver(LON_sub, LAT_sub, U_sub, V_sub, 
+              transform=ccrs.PlateCarree(), 
+              color='black', edgecolor='black', linewidth=0.3,
+              pivot='middle', scale=120, zorder=4)
+
+    plt.title(titre, fontsize=15, fontweight='bold', pad=20)
+    plt.show()

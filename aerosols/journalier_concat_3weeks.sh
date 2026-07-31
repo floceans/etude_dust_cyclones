@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 1. Liste des fichiers (vérifie bien qu'ils sont dans le dossier courant)
+
 files=(
 "/home/puyf/Documents/dust_brut_1/aladin/quotidien/od550dust_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM-ALADIN64C1_v1-r1_day_19600101-19601231.nc"
 "/home/puyf/Documents/dust_brut_1/aladin/quotidien/od550dust_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM-ALADIN64C1_v1-r1_day_19610101-19651231.nc"
@@ -22,18 +22,16 @@ output="final_without_first_weeks.nc"
 temp_concat="temp_total.nc"
 
 echo "Étape 1 : Concaténation des fichiers..."
-# On utilise mergetime pour être sûr que l'ordre chronologique est respecté
+
 cdo mergetime "${files[@]}" "$temp_concat"
 
-# Vérification si le fichier a bien été créé
 if [ ! -f "$temp_concat" ]; then
     echo "Erreur : La concaténation a échoué, vérifiez la présence des fichiers source."
     exit 1
 fi
 
 echo "Étape 2 : Suppression de la première semaine de chaque mois..."
-# La commande selday,8/31 sélectionne les jours du 8 au 31 pour CHAQUE mois présent
-# CDO gère automatiquement les mois courts (28, 30 jours) sans erreur.
+
 cdo selday,8/31 "$temp_concat" "$output"
 
 echo "Étape 3 : Nettoyage..."

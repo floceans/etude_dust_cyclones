@@ -1,50 +1,54 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from func_dust_cy import load_data, plot_time_series_multi, nbr_cyclones_mois
+from func_dust_cy import load_data, plot_time_series_multi, nbr_cyclones_mois, plot_cyclones_vs_aod, nbr_cyclones_an
 
 
 
 ################## OBS -> IBTRACS + MODIS #######################
 
 
-YEAR_MIN = 2003
-YEAR_MAX = 2010
-juin_sept = False
+YEAR_MIN = 1960
+YEAR_MAX = 2020
+JJSO = False
 
 merra = '/home/puyf/Documents/dust_brut_1/merra/AOT_MERRA2_198001-202012.nc'
 modis = '/home/puyf/Documents/dust_brut_1/modis/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc'
 
-aod_data_1 = load_data(merra, "DUEXTTAU", YEAR_MIN, YEAR_MAX, juin_sept)
-aod_data_2 = load_data(modis, None, YEAR_MIN, YEAR_MAX,juin_sept)
+aod_data_1 = load_data(merra, "DUEXTTAU", YEAR_MIN, YEAR_MAX, JJSO)
+aod_data_2 = load_data(modis, None, YEAR_MIN, YEAR_MAX,JJSO)
 
 
-#plot_time_series_multi(aod_data_1, "merra")
-plot_time_series_multi(aod_data_2, 'medis')
+plot_time_series_multi(aod_data_1, "merra")
+plot_time_series_multi(aod_data_2, 'modis')
 #plot_time_series_multi(aod_data_3, 'aladin_dust')
 #plot_time_series_multi(aod_data_4, 'aladin_aer')
 
-ibtracs = '/home/puyf/Documents/git/etude_dust_cyclones/ibtracs_transformed_1960_2024.csv'
+ibtracs = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ibtracs_transformed_1960_2024.csv'
 
-nbr_cyclones_mois(ibtracs, YEAR_MIN, YEAR_MAX, juin_sept, "Nombre de cyclones observés (ibtracs)")
+nbr_cyclones_mois(ibtracs, YEAR_MIN, YEAR_MAX, JJSO, "Nombre de cyclones observés (ibtracs)")
 
 
 plt.show()
 
 ############################## SIMU -> ALADIN ###########################################
 
-aladin_dust = '/home/puyf/Documents/dust_brut_1/aladin/od550dust_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM-ALADIN64C1_v1-r1_mon_200101-201012.nc'
-aladin_aer = '/home/puyf/Documents/dust_brut_1/aladin/od550aer_CAM-25_ERA5_evaluation_r1i1p1f1_CNRM_CNRM-ALADIN64C1_v1-r1_mon_200101-201012.nc'
+aladin_dust = '/home/puyf/Documents/dust_brut_1/aladin/aladin_dust_mensuel_1960-2024.nc'
+aladin_aer = '/home/puyf/Documents/dust_brut_1/aladin/aladin_aer_mensuel_1960-2024.nc'
 
-aod_data_3 = load_data(aladin_aer, "od550aer", YEAR_MIN, YEAR_MAX,juin_sept)
-aod_data_4 = load_data(aladin_dust, 'od550dust', YEAR_MIN, YEAR_MAX,juin_sept)
+aod_data_3 = load_data(aladin_aer, "od550aer", YEAR_MIN, YEAR_MAX,JJSO)
+aod_data_4 = load_data(aladin_dust, 'od550dust', YEAR_MIN, YEAR_MAX,JJSO)
 
-plot_time_series_multi(aod_data_3, 'aladin_aer')
+#plot_time_series_multi(aod_data_4, 'aladin_dust')
 
 
-aladin_cy = '/home/puyf/Documents/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv'
+aladin_cy = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+aladin_cy_norad = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
 
-nbr_cyclones_mois(aladin_cy, YEAR_MIN, YEAR_MAX, juin_sept, "Nombre de cyclones Aladin")
+nbr_cyclones_an(aladin_cy, YEAR_MIN, YEAR_MAX, JJSO, "Nombre de cyclones Aladin", svent = 0)
+plt.show()
 
+plot_cyclones_vs_aod(aod_data_4, aladin_cy, YEAR_MIN, YEAR_MAX, JJSO, 'aladin')
+plot_cyclones_vs_aod(aod_data_1, ibtracs, YEAR_MIN, YEAR_MAX, JJSO, 'ibtracs/merra')
 
 
 plt.show()

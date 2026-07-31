@@ -16,7 +16,7 @@ def mask_time(da, year_min, year_max, juin_oct=False):
     
     # Masque additionnel pour les mois (ne pas écraser, mais ajouter)
     if juin_oct:
-        mask = mask & (da.time.dt.month >= 6) & (da.time.dt.month <= 10)
+        mask = mask & (da.time.dt.month >= 6) & (da.time.dt.month <= 8) ################################################## JJA DCP ################""
         
     return da.where(mask, drop=True)
 
@@ -94,28 +94,83 @@ def plot_time_series_multi(da, filename):
     plt.tight_layout()
 
 
+import csv
+import matplotlib.pyplot as plt
+from datetime import datetime
 
-def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_oct_uniquement=False, label="Nombre de cyclones"):
+def nbr_cyclones_an(chemin_csv, annee_min, annee_max, juin_oct_uniquement=True, label="Nombre de cyclones", svent=26):
+    """
+    Compte le nombre de cyclones par an et trace un diagramme à barres.
+    """
+    # 1. Préparation du stockage (un ensemble par année pour éviter les doublons d'ID)
+    cyclones_par_an = {an: set() for an in range(annee_min, annee_max + 1)}
+    
+    lat_min, lat_max, lon_min, lon_max = 10, 20, -80, -20
+
+    # 2. Lecture et comptage
+    with open(chemin_csv, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            date_obj = datetime.strptime(row['date'], '%Y-%m-%d %H:%M:%S')
+            annee, mois, id_tc = date_obj.year, date_obj.month, row['numtc']
+            lat, lon = float(row['lat']), float(row['lon'])
+
+            # Filtre temporel (années)
+            if annee_min <= annee <= annee_max:
+                # Filtre saisonnier (Juin à Octobre)
+                if juin_oct_uniquement and not (6 <= mois <= 10):
+                    continue  # On passe à la ligne suivante si on est hors saison
+                # Filtre géographique
+                #if (lat_min <= lat <= lat_max) and (lon_min <= lon <= lon_max):
+                if lat>= 30 :
+                    continue
+                if float(row['vmax'])>=svent and float(row['pmin'])<=1005:
+                    cyclones_par_an[annee].add(id_tc)
+                
+
+    # 3. Préparation des données pour le graphique
+    annees = sorted(cyclones_par_an.keys())
+    counts = [len(cyclones_par_an[an]) for an in annees]
+
+    # 4. Tracé du diagramme à barres
+    ax1 = plt.gca()
+    
+    # On utilise .bar au lieu de .plot
+    # width=0.6 pour laisser un peu d'espace entre les barres
+    ax1.bar(annees, counts, color='blue', alpha=0.5, label=label, width=0.6)
+    
+    # Configuration de l'axe
+    ax1.set_ylabel("Nombre de cyclones (par an)", fontweight='bold')
+    # On ajuste le max pour que les barres ne touchent pas le haut du cadre
+    ax1.set_ylim(0, max(counts) + 2 if counts else 10)
+    
+    # Positionnement de la légende
+    ax1.legend(loc='upper left')
+    print(sum(counts))
+    return annees, counts
+
+def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_oct_uniquement=True, label="Nombre de cyclones"):
     """
     Renvoie la liste des cyclones par mois et trace les points sur le graphique actuel.
     """
     donnees_temp = {}
-
+    lat_min, lat_max, lon_min, lon_max = 10, 20, -80, -20,
     # 1. Lecture et comptage (sans pandas)
     with open(chemin_csv, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             date_obj = datetime.strptime(row['date'], '%Y-%m-%d %H:%M:%S')
             annee, mois, id_tc = date_obj.year, date_obj.month, row['numtc']
+            lat, lon = float(row['lat']), float(row['lon'])
 
             if annee_min <= annee <= annee_max:
                 if juin_oct_uniquement and not (6 <= mois <= 10):
-                    continue
+                    if (lat_min <= lat <= lat_max) and (lon_min <= lon <= lon_max):
+                        cle = (annee, mois)
+                        if cle not in donnees_temp:
+                            donnees_temp[cle] = set()
+                        donnees_temp[cle].add(id_tc)
                 
-                cle = (annee, mois)
-                if cle not in donnees_temp:
-                    donnees_temp[cle] = set()
-                donnees_temp[cle].add(id_tc)
 
     # 2. Construction de la liste et de l'axe temporel (X)
     liste_counts = []
@@ -156,30 +211,46 @@ def nbr_cyclones_mois(chemin_csv, annee_min, annee_max, juin_oct_uniquement=Fals
     #return liste_counts
 
 
-def get_cyclone_climatology(file_path, year_min, year_max):
-    """Calcule le nombre moyen de cyclones par mois sans pandas."""
+def get_cyclone_climatology(file_path, year_min, year_max, ALADIN=False):
+    """Calcule le nombre moyen de cyclones par mois et le nombre total unique."""
     # Dictionnaire de sets pour stocker les IDs uniques (année, num_tc) par mois
     monthly_unique_tcs = {m: set() for m in range(1, 13)}
+    # Set global pour compter chaque cyclone unique sur toute la période
+    all_tcs = set() 
+    
     num_years = year_max - year_min + 1
 
     with open(file_path, mode='r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # Extraction de la date (format YYYY-MM-DD...)
             try:
                 dt = datetime.strptime(row['date'].strip()[:10], '%Y-%m-%d')
             except ValueError:
-                # Si le format est différent (ex: YYYYMMDD), adapter ici
                 dt = datetime.strptime(row['date'].strip()[:8], '%Y%m%d')
 
             if year_min <= dt.year <= year_max:
-                # On crée une clé unique pour le cyclone dans cette année
-                tc_id = (dt.year, row['numtc'])
-                monthly_unique_tcs[dt.month].add(tc_id)
+                # Logique de filtrage (Vmax > 26 m/s pour ALADIN par exemple)
+                is_valid = False
+                if float(row['lat']) < 29 :
+                    if ALADIN:
+                        if float(row['vmax']) > 26 and float(row['pmin'])<1005:
+                            is_valid = True
+                    else:
+                        is_valid = True
 
-    # Conversion en moyenne par année
+                    if is_valid:
+                        tc_id = (dt.year, row['numtc'])
+                        monthly_unique_tcs[dt.month].add(tc_id)
+                        all_tcs.add(tc_id)
+
+    # Conversion en moyenne par année pour chaque mois
     clim_counts = [len(monthly_unique_tcs[m]) / num_years for m in range(1, 13)]
-    return clim_counts
+    # Nombre total de cyclones uniques sur la période
+    total_cyclones = len(all_tcs)
+    
+    return clim_counts, total_cyclones
+
+
 
 def get_aod_climatology_xr(da):
     """Calcule la moyenne mensuelle spatiale puis temporelle."""
@@ -232,11 +303,13 @@ def plot_combined_climatology(aod_obs, cy_obs, aod_sim, cy_sim, year_min, year_m
     ax1.set_ylim(0, max(max(cy_obs), max(cy_sim)) * 1.2) # Marge en haut
 
     # --- AXE 2 : AOD (LIGNES) ---
+
+
     ax2 = ax1.twinx()
     line1 = ax2.plot(months, aod_obs.values, color='blue', marker='o', linewidth=2, 
-                     label='AOD (MERRA)', linestyle='-')
+                    label='AOD (MERRA)', linestyle='-')
     line2 = ax2.plot(months, aod_sim.values, color='red', marker='s', linewidth=2, 
-                     label='AOD (ALADIN Dust)', linestyle='--')
+                    label='AOD (ALADIN Dust)', linestyle='--')
     
     ax2.set_ylabel('Aerosol Optical Depth (AOD)', color='black', fontsize=12)
     # On synchronise les limites de l'AOD pour que la comparaison soit juste
@@ -253,3 +326,80 @@ def plot_combined_climatology(aod_obs, cy_obs, aod_sim, cy_sim, year_min, year_m
     ax1.legend(lines + lines2, labels + labels2, loc='upper left', ncol=2)
 
     fig.tight_layout()
+
+
+import csv
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+def plot_cyclones_vs_aod(da, chemin_csv, annee_min, annee_max,jjaso=True, label=""):
+    """
+    Ajoute un nuage de points (AOD vs Nb Cyclones) au graphique actuel.
+    """
+    # --- 1. Paramètres MDR ---
+    lat_min, lat_max = 10, 20
+    lon_min, lon_max = -80, -20
+    mois_jjaso = [6, 7, 8, 9, 10]
+
+    # --- 2. Calcul de l'AOD moyen annuel (Zone MDR) ---
+    dims_spatiales = ["x", "y"] if "x" in da.dims else ["lat", "lon"]
+    
+    # Tentative de sélection spatiale si les coordonnées lat/lon existent
+    try:
+        if "lat" in da.coords:
+            da_mdr = da.sel(lat=slice(lat_min, lat_max), lon=slice(lon_min, lon_max))
+        else:
+            da_mdr = da
+    except:
+        da_mdr = da
+    
+    da_mdr = da
+    # Moyenne annuelle (JJASO est normalement déjà filtré par load_data)
+    aod_annuel = da_mdr.mean(dim=dims_spatiales).groupby('time.year').mean()
+    annees_communes = aod_annuel.year.values
+    valeurs_aod = aod_annuel.values
+
+    # --- 3. Comptage des cyclones (Genèse MDR + JJASO) ---
+    counts_par_an = {an: 0 for an in annees_communes}
+    
+    with open(chemin_csv, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                # Filtrage strict sur le point de formation (step 1)
+                if row['step'].strip() == '1':
+                    date_obj = datetime.strptime(row['date'].strip(), '%Y-%m-%d %H:%M:%S')
+                    an, mois = date_obj.year, date_obj.month
+                    lat, lon = float(row['lat']), float(row['lon'])
+
+                    if annee_min <= an <= annee_max:
+                        #if mois in mois_jjaso and jjaso:##################################################################################
+                            #if (lat_min <= lat <= lat_max) and (lon_min <= lon <= lon_max):
+                        if an in counts_par_an:
+                            counts_par_an[an] += 1
+            except (ValueError, KeyError):
+                continue
+
+    liste_counts = [counts_par_an[an] for an in annees_communes]
+
+    # --- 4. Tracé sur l'axe courant ---
+    ax = plt.gca()
+    # Scatter plot (les points)
+    p = ax.scatter(valeurs_aod, liste_counts, alpha=0.7, edgecolors='w', label=label)
+    color = p.get_facecolor()[0] # Récupère la couleur auto-assignée pour la courbe de tendance
+
+    # Ajout de la droite de tendance
+    if len(valeurs_aod) > 1:
+        m, b = np.polyfit(valeurs_aod, liste_counts, 1)
+        ax.plot(valeurs_aod, m*valeurs_aod + b, color=color, linestyle='--', alpha=0.8)
+        
+        # Calcul Corrélation
+        corr = np.corrcoef(valeurs_aod, liste_counts)[0, 1]
+        print(f"[{label}] Corrélation R = {corr:.3f}")
+
+    # Configuration esthétique (ne s'applique qu'une fois)
+    ax.set_xlabel("AOD moyen (JJASO) - MDR", fontweight='bold')
+    ax.set_ylabel("Nombre de cyclones par an (Genèse MDR)", fontweight='bold')
+    ax.grid(True, linestyle=':', alpha=0.5)
+    ax.legend()

@@ -10,11 +10,11 @@ from func import get_density, indice_global_cyclogenese
 
 def main():
     
-    file1 = 'ALADIN_rel10_1960_2024.csv'
-    file2 = 'ibtracs_transformed_1960_2024.csv'
+    file2 = 'ALADIN_rel10_1960_2024.csv'
+    file1 = 'ALADIN-NoRadDust-rel10_1960_2000.csv'
 
     yearmin = int(sys.argv[1]) if len(sys.argv) > 1 else 1960
-    yearmax = int(sys.argv[2]) if len(sys.argv) > 2 else 2024
+    yearmax = int(sys.argv[2]) if len(sys.argv) > 2 else 1999
 
     # --- Configuration de la grille commune ---
     lonmin, lonmax, latmin, latmax = -105, 5, 5, 30
@@ -22,10 +22,10 @@ def main():
 
     # --- Calcul des deux densités ---
     print(f"Calcul de la densité pour {file1}...")
-    zi1, x1, y1, long_x1 = get_density(file1, yearmin, yearmax, xi, yi)
+    zi1, x1, y1, long_x1 = get_density(file1, yearmin, yearmax, xi, yi, svent = 26, spress=1005)
     
     print(f"Calcul de la densité pour {file2}...")
-    zi2, x2, y2, long_x2 = get_density(file2, yearmin, yearmax, xi, yi)
+    zi2, x2, y2, long_x2 = get_density(file2, yearmin, yearmax, xi, yi, svent = 26, spress=1005)
 
     # --- Calcul de la DIFFÉRENCE ---
     # zi_diff > 0 : Plus de trajectoires dans le fichier 1
@@ -48,7 +48,7 @@ def main():
     # Mais si tu tiens à 'turbo', attention : elle ne montre pas bien le zéro.
     # 'RdBu_r' : Rouge = Surplus, Bleu = Déficit.
     vmax = np.max(np.abs(zi_diff))
-    level = np.linspace(-90, 90, 19) ###################" changer pour mm echelle"
+    level = np.linspace(-20, 20, 21) ###################" changer pour mm echelle"
 
     cf = ax.contourf(xi, yi, zi_diff, levels=level, cmap='RdBu_r', 
                      vmin=-vmax, vmax=vmax, transform=proj, extend='both')

@@ -7,56 +7,56 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import sys
 from func import fichier_source, indice_global_cyclogenese, get_density
 
-
-
-file = 'ibtracs'
+# param
+file = 'aladin_ref'
 yearmin = 1960
-yearmax = 2024
+yearmax = 2000
+FONT_SIZE = 21
 
-filename = fichier_source(sys.argv if len(sys.argv)>0 else None, file)
+filename = 'ALADIN-NoRadDust-rel10_1960_2000.csv' if file == 'aladin_norad' else 'ALADIN_rel10_1960_2024.csv'
 
-print(filename)
+if len(sys.argv) > 2: yearmin = int(sys.argv[2])
+if len(sys.argv) > 3: yearmax = int(sys.argv[3])
 
-
-yearmin = int(sys.argv[2]) if len(sys.argv) > 2 else yearmin
-yearmax = int(sys.argv[3]) if len(sys.argv) > 3 else yearmax
-
-
-lonmin, lonmax, latmin, latmax = -105, 5, 5, 35
+lonmin, lonmax, latmin, latmax = -105, 5, 5, 30
 xi, yi = np.mgrid[lonmin:lonmax:200j, latmin:latmax:200j]
 
-zi, x, y, long_x = get_density(filename, yearmin, yearmax, xi, yi)
+#load_data et tratement dans get_density
+zi, x, y, long_x = get_density(filename, yearmin, yearmax, xi, yi, svent=26, spress=1005)
 
-
-indice = indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax)
-print(f"Indice global de cyclogenèse (step=1) pour {filename} : {indice:.2f} (nombre de points : {long_x})")
-
-
-# --- 3. Plotting ---
+#plot
 proj = ccrs.PlateCarree()
-# On centre la carte sur la zone d'intérêt
 clon = -50 
 projcl = ccrs.PlateCarree(central_longitude=clon)
 
-fig = plt.figure(figsize=(10, 7))
+fig = plt.figure(figsize=(14, 10))
 ax = plt.axes(projection=projcl)
 
-ax.set_title(f'Track Density {file} [{yearmin}-{yearmax}]', fontsize=12, pad=15)
+ax.set_title(f'Densité de trajectoire : {file} [{yearmin}-{yearmax}]', fontsize=FONT_SIZE, pad=20)
 ax.set_extent([lonmin, lonmax, latmin, latmax], crs=proj)
 
-# Ajout des côtes et grille
-ax.coastlines(resolution='50m', color='black', linewidth=1)
+ax.coastlines(resolution='50m', color='black', linewidth=1.2)
 
-# Tracé de la densité avec la colormap 'turbo'
-levels = np.linspace(0, 150, 16) ###################" changer pour mm echelle"
+gl = ax.gridlines(draw_labels=True, dms=True, x_inline=False, y_inline=False, alpha=0.3)
+gl.top_labels = False
+gl.right_labels = False
+gl.xlabel_style = {'size': FONT_SIZE}
+gl.ylabel_style = {'size': FONT_SIZE}
+gl.xformatter = LongitudeFormatter()
+gl.yformatter = LatitudeFormatter()
+
+levels = np.linspace(0, 75, 26)
+
 cf = ax.contourf(xi, yi, zi, levels=levels, cmap='turbo', transform=proj, extend='max')
 
-cs = ax.contour(xi, yi, zi, levels=levels, colors='black', linewidths=0.5, alpha=0.4, transform=ccrs.PlateCarree())
-ax.clabel(cs, inline=True, fontsize=8, fmt='%1.1f')
 
-# Barre d'échelle
-cbar = plt.colorbar(cf, ax=ax, orientation='horizontal', pad=0.1, aspect=40)
-cbar.set_label('Relative Density Scale')
+cs = ax.contour(xi, yi, zi, levels=levels, colors='black', linewidths=0.7, alpha=0.5, transform=proj)
 
-plt.tight_layout()
+ax.clabel(cs, inline=True, fontsize=12, fmt='%1.0f')
+
+
+cbar = plt.colorbar(cf, ax=ax, orientation='horizontal', pad=0.15, aspect=40)
+cbar.set_label('Relative Density Scale', fontsize=FONT_SIZE)
+cbar.ax.tick_params(labelsize=FONT_SIZE)
+
 plt.show()

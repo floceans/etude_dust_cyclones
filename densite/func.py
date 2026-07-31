@@ -26,10 +26,10 @@ def indice_global_cyclogenese(zi, lonmin, lonmax, latmin, latmax):
     nx, ny = zi.shape
     
 
-    indice = np.sum(np.abs(zi)) / nx * ny
+    indice = np.sum(np.abs(zi)) / (nx * ny)
     return indice
 
-def get_density(filename, yearmin, yearmax, xi, yi):
+def get_density(filename, yearmin, yearmax, xi, yi, svent, spress):
     # Listes pour stocker nos coordonnées filtrées
     lons = []
     lats = []
@@ -45,7 +45,7 @@ def get_density(filename, yearmin, yearmax, xi, yi):
                 lat = float(row['lat'])
                 lon = float(row['lon'])
 
-                if (yearmin <= dt.year <= yearmax) and (vmax > 17) and (lat < 29): ######################### filtre latitudes & vmax & temps
+                if (yearmin <= dt.year <= yearmax) and (vmax > 17) and (lat < 29)and float(row['vmax']) > svent and float(row['pmin'])<spress: ######################### filtre latitudes & vmax & temps
                     lons.append(lon)
                     lats.append(lat)
             except (ValueError, KeyError):
@@ -78,7 +78,7 @@ def get_density(filename, yearmin, yearmax, xi, yi):
     return zi, x, y, n_points
 
 
-def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vort, seuil_vent, seuil_press):
+def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, latmin, latmax, seuil_vent, seuil_press):
     #####ibtracs = True if filename == 'ibtracs_transformed_1960_2024.csv' else False
 
     lons = []
@@ -91,8 +91,8 @@ def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, l
             if float(row['step']) == 1 :
                 nbr = 0
             year = int(row['date'][:4])
-            if yearmin <= year <= yearmax and float(row['vomax']) > seuil_vort and nbr == 0 and float(row['vmax']) > seuil_vent and float(row['pmin'])<seuil_press: #and row['step'] == '1':
-                if float(row['lat']) < 30:
+            if yearmin <= year <= yearmax and nbr == 0 and float(row['vmax']) > seuil_vent and float(row['pmin'])<seuil_press: #and row['step'] == '1':
+                if float(row['lat']) < 29:
                     nbr += 1
                     lons.append(float(row['lon']))
                     lats.append(float(row['lat']))
@@ -111,7 +111,7 @@ def get_density_cyclogenese_aladin(filename, yearmin, yearmax, lonmin, lonmax, l
 
     k = gaussian_kde(np.vstack([x, y]))
     zi = k(coords)
-    zi = zi.reshape(xi.shape) * (len(x) / 4 * 25)
+    zi = zi.reshape(xi.shape) * (len(x) /4 * 25)
     
     return zi, x, y, xi, yi, len(x)
 
@@ -123,11 +123,12 @@ def get_density_cyclogenese_ibtracs(filename, yearmin, yearmax, lonmin, lonmax, 
         reader = csv.DictReader(f)
         nbr = 0
         for row in reader: 
-        ### magouille avec nbr pour prendre que premier pt avec vort > seuil_vort pour chaque cyclone
             year = int(row['date'][:4])
             if yearmin <= year <= yearmax and int(row['step']) == 1:
-                lons.append(float(row['lon']))
-                lats.append(float(row['lat']))
+                if float(row['lat']) < 30:
+                    nbr+=1
+                    lons.append(float(row['lon']))
+                    lats.append(float(row['lat']))
 
     x = np.array(lons)
     y = np.array(lats)
@@ -148,5 +149,4 @@ def get_density_cyclogenese_ibtracs(filename, yearmin, yearmax, lonmin, lonmax, 
 
     zi = zi.reshape(xi.shape) * coef
 
-    
     return zi, x, y, xi, yi, len(x)
