@@ -7,8 +7,8 @@ import cartopy.feature as cfeature
 ###############
 JJASO = True
 plev_val = 100000
-file_ta = "/home/puyf/Documents/data/temp_aladin/temp_norad/ta_norad_3weeks_monthly_1960-2000.nc"
-file_hus = "/cnrm/mosca/USERS/puyf/NO_SAVE/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
+file_ta = "/cnrm/mosca/USERS/puyf/stage/data/temp/ta_ref_3weeks_monthly_1960-2023.nc"
+file_hus = "/cnrm/mosca/USERS/puyf/stage/data/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
 
 
 

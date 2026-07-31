@@ -8,8 +8,8 @@ import cartopy.feature as cfeature
 
 
 # Fichiers à modifier selon ton arborescence
-file_ref = '/home/puyf/Documents/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv'
-file_norad = 'ALADIN-NoRadDust-rel10_1960_2000.csv'
+file_ref = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+file_norad = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
 
 
 YEAR_MIN, YEAR_MAX = 1960, 2000

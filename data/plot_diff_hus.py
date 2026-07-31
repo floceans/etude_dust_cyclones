@@ -7,13 +7,13 @@ from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 
 
 JJASO = True
-plev = 300
+plev = 300 ############## gérer géopotentiel 
 plev*=100
 FS = 21  # Taille de la police globale
 
 # Chemins des fichiers
-file_ref = "/cnrm/mosca/USERS/puyf/NO_SAVE/hus/hus_concat_ref_3weeks_monthly_1960-2023.nc"
-file_norad = "/cnrm/mosca/USERS/puyf/NO_SAVE/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
+file_ref = "/cnrm/mosca/USERS/puyf/stage/data/hus/hus_concat_ref_3weeks_monthly_1960-2023.nc"
+file_norad = "/cnrm/mosca/USERS/puyf/stage/data/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
 
 
 

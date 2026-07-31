@@ -17,8 +17,9 @@ FONT_SIZE = 21
 
 #######################################################################################################
 
-file_ref = "/home/puyf/Documents/data/rsds/rsds_ref_3weeks_monthly_1960-2023.nc"
-file_exp = "/home/puyf/Documents/data/rsds/rsds_norad_3weeks_monthly_1960-2023.nc" #rsds_ref_4s_1960-2023.nc"
+file_ref = "/cnrm/mosca/USERS/puyf/stage/data/rsds/rsds_ref_3weeks_monthly_1960-2023.nc"
+file_exp = "/cnrm/mosca/USERS/puyf/stage/data/rsds/rsds_norad_3weeks_monthly_1960-2023.nc"
+
 
 #######################################################################################################
 

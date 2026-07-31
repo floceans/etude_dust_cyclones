@@ -29,7 +29,7 @@ elif len(sys.argv) > 1 and sys.argv[1] =='aladin_norad' or data == 'aladin_norad
     filename = 'ALADIN-NoRadDust-rel10_1960_2000.csv'
     print('data aladin_norad')
 else:
-    filename = "ibtracs_transformed_1960_2024.csv" if data == 'ibtracs' else "ALADIN_rel10_1960_2024.csv"
+    filename = "'/cnrm/mosca/USERS/puyf/stage/data/tracks/ibtracs_transformed_1960_2024.csv" if data == 'ibtracs' else "/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv"
 
 annee_debut = int(sys.argv[2]) if len(sys.argv) > 2 else yearmin
 annee_fin = int(sys.argv[3]) if len(sys.argv) > 3 else yearmax

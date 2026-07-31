@@ -14,7 +14,7 @@ SPRESS = 1005
 file = 'ALADIN-NoRadDust'
 
 ## fichiers source & args
-filename = 'ALADIN-NoRadDust-rel10_1960_2000.csv' #'ibtracs_transformed_1960_2024.csv' # #  'ALADIN_rel10_1960_2024.csv'
+filename = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv' #'ibtracs_transformed_1960_2024.csv' # #  'ALADIN_rel10_1960_2024.csv'
 # #fichier_source(sys.argv, file)
 
 print(filename)

@@ -15,8 +15,8 @@ LON_MIN, LON_MAX = -105, 10
 FONT_SIZE = 21
 
 # Chemins des fichiers
-file_ref = "/cnrm/mosca/USERS/puyf/NO_SAVE/mrso/mrsos_concat_ref_3weeks_monthly_1960-2000.nc"
-file_exp = "/cnrm/mosca/USERS/puyf/NO_SAVE/mrso/mrsos_concat_norad_3weeks_monthly_1960-2000.nc"
+file_ref = "/cnrm/mosca/USERS/puyf/stage/data/mrso/mrsos_concat_ref_3weeks_monthly_1960-2000.nc"
+file_exp = "/cnrm/mosca/USERS/puyf/stage/data/mrso/mrsos_concat_norad_3weeks_monthly_1960-2000.nc"
 
 # =================================================
 

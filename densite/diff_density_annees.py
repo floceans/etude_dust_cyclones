@@ -94,8 +94,8 @@ def plot_cyclone_density_difference(xi, yi, zi_diff, lonmin, lonmax, latmin, lat
 
 # --- Exécution principale ---
 def main():
-    file = 'ALADIN_rel10_1960_2024.csv'
-    #file1 = 'ALADIN-NoRadDust-rel10_1960_2000.csv'
+    file = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+    #file1 = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
 
     # --- 1. Définition des listes d'années personnalisées ---
     # Tu peux remplacer ces listes par les années issues de tes classements (ex: fortes vs faibles)

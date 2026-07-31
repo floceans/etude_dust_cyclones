@@ -12,7 +12,7 @@ plev = 85000
 AN_MIN = '1960'
 AN_MAX = '2000'
 # Remplacez par le chemin de votre fichier hus
-file_hus = "/cnrm/mosca/USERS/puyf/NO_SAVE/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
+file_hus = "/cnrm/mosca/USERS/puyf/stage/data/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
 
 def get_hus_mean(path, plev, is_jjaso):
     """Charge le fichier hus, sélectionne le niveau et convertit en g/kg."""

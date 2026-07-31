@@ -8,7 +8,7 @@ import cartopy.feature as cfeature
 ###############
 JJASO = True
 plev = 85000
-file_ta = "/home/puyf/Documents/data/temp_aladin/temp_ref/ta_ref_3weeks_monthly_1960-2023.nc"
+file_ta = "/cnrm/mosca/USERS/puyf/stage/data/temp/ta_ref_3weeks_monthly_1960-2023.nc"
 
 
 def get_temp_mean(path, plev, is_jjaso):

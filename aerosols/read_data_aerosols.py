@@ -11,15 +11,15 @@ data = 'merra'  #modis aladin
 
 if data == 'modis':
     VAR_AOD = "od550dust"
-    FILE_PATH = "/home/puyf/Documents/dust_brut_1/modis/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc"
+    FILE_PATH = "/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/modis/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc"
 elif data == 'aladin_dust':
     VAR_AOD = "od550dust"
-    FILE_PATH = "/home/puyf/Documents/dust_brut_1/aladin/aladin_dust_mensuel_1960-2024.nc"
+    FILE_PATH = "/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/aladin/aladin_dust_mensuel_1960-2024.nc"
 elif data == 'aladin_aer':
         VAR_AOD = 'od550aer'
-        FILE_PATH = "/home/puyf/Documents/dust_brut_1/aladin/aladin_aer_mensuel_1960-2024.nc"
+        FILE_PATH = "/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/aladin/aladin_aer_mensuel_1960-2024.nc"
 elif data == 'merra':
-    FILE_PATH = '/home/puyf/Documents/dust_brut_1/merra/AOT_MERRA2_198001-202012.nc'
+    FILE_PATH = '/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/merra/AOT_MERRA2_198001-202012.nc'
     VAR_AOD = "DUEXTTAU"
 
 

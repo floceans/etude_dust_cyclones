@@ -21,9 +21,9 @@ JJASO_AOD = True
 JJASO = True
 
 # Fichiers
-ibtracs = 'ibtracs_transformed_1960_2024.csv'
-aladin = 'ALADIN_rel10_1960_2024.csv'
-aladin_NoRadDust = 'ALADIN-NoRadDust-rel10_1960_2000.csv'
+ibtracs = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ibtracs_transformed_1960_2024.csv'
+aladin = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+aladin_NoRadDust = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
 FILE = aladin if data_f == 'aladin' else ibtracs
 FILE = aladin_NoRadDust if data_f == 'aladin_norad' else FILE
 

@@ -13,8 +13,8 @@ FONT_SIZE = 28
 P_LEVELS = [100000, 92500, 85000, 75000, 70000, 60000, 50000, 40000, 30000, 25000, 20000]
 # =================================================
 
-dossier_ref = "/cnrm/mosca/USERS/puyf/NO_SAVE/vents_aladin/ref/"
-dossier_norad = "/cnrm/mosca/USERS/puyf/NO_SAVE/vents_aladin/NoRadDust/"
+dossier_ref = "/cnrm/mosca/USERS/puyf/stage/data/vents_aladin/ref/"
+dossier_norad = "/cnrm/mosca/USERS/puyf/stage/data/vents_aladin/NoRadDust/"
 
 file_list_ref = [dossier_ref + "ua_concat_ref_3weeks_monthly_1960-2000.nc"]
 file_list_norad = [dossier_norad + "ua_concat_norad_3weeks_monthly_1960-2000.nc"]

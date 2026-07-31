@@ -13,7 +13,7 @@ yearmin = 1960
 yearmax = 2000
 FONT_SIZE = 21
 
-filename = 'ALADIN-NoRadDust-rel10_1960_2000.csv' if file == 'aladin_norad' else 'ALADIN_rel10_1960_2024.csv'
+filename = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv' if file == 'aladin_norad' else '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
 
 if len(sys.argv) > 2: yearmin = int(sys.argv[2])
 if len(sys.argv) > 3: yearmax = int(sys.argv[3])

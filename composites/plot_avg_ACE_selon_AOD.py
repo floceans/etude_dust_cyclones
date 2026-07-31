@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-fichier_entree = "/cnrm/mosca/USERS/puyf/NO_SAVE/composites/compo_cy_aod_1960-2024.nc"
+fichier_entree = "/cnrm/mosca/USERS/puyf/stage/data/composites/compo_cy_aod_1960-2024.nc"
 
 print(f"📂 Chargement du fichier : {fichier_entree}")
 ds = xr.open_dataset(fichier_entree)

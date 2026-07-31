@@ -18,8 +18,9 @@ FONT_SIZE = 21
 # Paramètres de la colorbar fixes
 V_MIN, V_MAX = -2,2
 
-file_ref = "/home/puyf/Documents/data/temp_aladin/temp_ref/ta_ref_3weeks_monthly_1960-2023.nc"
-file_exp = "/home/puyf/Documents/data/temp_aladin/temp_norad/ta_norad_3weeks_monthly_1960-2000.nc"
+file_ref = "/cnrm/mosca/USERS/puyf/stage/data/temp/ta_ref_3weeks_monthly_1960-2023.nc"
+file_exp = "/cnrm/mosca/USERS/puyf/stage/data/temp/ta_norad_3weeks_monthly_1960-2000.nc"
+#/home/puyf/Documents/data/temp_aladin/temp_norad/ta_norad_3weeks_monthly_1960-2000.nc
 # =================================================
 
 def get_temp_mean(path, plev, is_jjaso, ymin, ymax):

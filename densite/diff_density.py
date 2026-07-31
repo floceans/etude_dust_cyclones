@@ -10,8 +10,8 @@ from func import get_density, indice_global_cyclogenese
 
 def main():
     
-    file2 = 'ALADIN_rel10_1960_2024.csv'
-    file1 = 'ALADIN-NoRadDust-rel10_1960_2000.csv'
+    file2 = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+    file1 = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
 
     yearmin = int(sys.argv[1]) if len(sys.argv) > 1 else 1960
     yearmax = int(sys.argv[2]) if len(sys.argv) > 2 else 1999

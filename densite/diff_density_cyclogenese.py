@@ -19,7 +19,7 @@ def main():
     SVENT = 26
     SPRESS = 1005
 
-    ibtracs = '/home/puyf/Documents/git/etude_dust_cyclones/ibtracs_transformed_1960_2024.csv'
+    ibtracs = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ibtracs_transformed_1960_2024.csv'
 
     file2 = 'ALADIN_rel10_1960_2024.csv'
     file1 = 'ALADIN-NoRadDust-rel10_1960_2000.csv' #ibtracs

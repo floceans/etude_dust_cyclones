@@ -19,9 +19,9 @@ for annee in range(annee_min, annee_max):
     periode = f"{annee}-{annee + 1}"
 
     
-    fichier_ua = f"/cnrm/mosca/USERS/puyf/NO_SAVE/composites/vents/compo_3D_ua_{periode}.ERA5_evaluation_rel10.nc"
-    fichier_va = f"/cnrm/mosca/USERS/puyf/NO_SAVE/composites/vents/compo_3D_va_{periode}.ERA5_evaluation_rel10.nc"
-    fichier_aod = f"/cnrm/mosca/USERS/puyf/NO_SAVE/composites/dust/compo_2D_od550dust_{periode}.ERA5_evaluation_rel10.nc"
+    fichier_ua = f"/cnrm/mosca/USERS/puyf/stage/data/composites/vents/compo_3D_ua_{periode}.ERA5_evaluation_rel10.nc"
+    fichier_va = f"/cnrm/mosca/USERS/puyf/stage/data/composites/vents/compo_3D_va_{periode}.ERA5_evaluation_rel10.nc"
+    fichier_aod = f"/cnrm/mosca/USERS/puyf/stage/data/composites/dust/compo_2D_od550dust_{periode}.ERA5_evaluation_rel10.nc"
 
     
     if not (

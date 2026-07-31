@@ -45,15 +45,15 @@ else:
 print(f"📅 Mois pris en compte (numériques) : {liste_mois_num}")
 
 
-ibtracs = 'ibtracs_transformed_1960_2024.csv'
-aladin_N = 'ALADIN_rel10_1960_2024.csv'
-aladin = 'ALADIN-NoRadDust-rel10_1960_2000.csv'
+ibtracs = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ibtracs_transformed_1960_2024.csv'
+aladin_N = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+aladin = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
 FILE = aladin if data_f == 'aladin' else ibtracs
 aladin_NoRadDust = None
 FILE = aladin_NoRadDust if data_f == 'aladin_norad' else FILE
 
-aladin_dust = '/home/puyf/Documents/dust_brut_1/aladin/aladin_dust_mensuel_1960-2024.nc'
-merra = '/home/puyf/Documents/dust_brut_1/merra/AOT_MERRA2_198001-202012.nc'
+aladin_dust = '/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/aladin/aladin_dust_mensuel_1960-2024.nc'
+merra = '/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/merra/AOT_MERRA2_198001-202012.nc'
 
 AOD_FILE_PATH_1 = aladin_dust
 AOD_FILE_PATH_2 = merra

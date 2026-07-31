@@ -7,9 +7,9 @@ YEAR_MIN = 1960
 YEAR_MAX = 2024
 FS = 21
 
-aladin_ref = '/home/puyf/Documents/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv'
-aladin_norad = '/home/puyf/Documents/git/etude_dust_cyclones/ALADIN-NoRadDust-rel10_1960_2000.csv'
-ibtracs = '/home/puyf/Documents/git/etude_dust_cyclones/ALADIN-NoRadDust-rel10_1960_2000.csv'
+aladin_ref = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+aladin_norad = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
+ibtracs = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv'
 
 # --- 1. Calcul de la climatologie (Moyenne par mois) ---
 cy_clim_ibtracs = get_cyclone_climatology(ibtracs, YEAR_MIN, YEAR_MAX)

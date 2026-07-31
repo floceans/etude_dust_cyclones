@@ -5,9 +5,9 @@ import os
 from fonc import get_cyclone_category_climatology
 
 YEAR_MIN, YEAR_MAX = 1960, 2000
-aladin_ref = '/home/puyf/Documents/git/etude_dust_cyclones/ALADIN_rel10_1960_2024.csv'
-ibtracs = 'ibtracs_transformed_1960_2024.csv'
-aladin_ref_filtered = 'ALADIN_REF_filtered_vmax26.csv'
+aladin_ref = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv'
+ibtracs = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ibtracs_transformed_1960_2024.csv'
+aladin_ref_filtered = '/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_REF_filtered_vmax26.csv'
 
 categories = ['TS', '1', '2', '3', '4', '5']
 month_names = ['J', 'J', 'A', 'S', 'O', 'N']

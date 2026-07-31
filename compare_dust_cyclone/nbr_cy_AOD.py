@@ -11,8 +11,8 @@ YEAR_MIN = 1960
 YEAR_MAX = 2020
 JJSO = False
 
-merra = '/home/puyf/Documents/dust_brut_1/merra/AOT_MERRA2_198001-202012.nc'
-modis = '/home/puyf/Documents/dust_brut_1/modis/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc'
+merra = '/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/merra/AOT_MERRA2_198001-202012.nc'
+modis = '/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/modis/AOD_550_Dark_Target_Deep_Blue_Combined_Mean_Mean_200207-202312.nc'
 
 aod_data_1 = load_data(merra, "DUEXTTAU", YEAR_MIN, YEAR_MAX, JJSO)
 aod_data_2 = load_data(modis, None, YEAR_MIN, YEAR_MAX,JJSO)
@@ -32,8 +32,8 @@ plt.show()
 
 ############################## SIMU -> ALADIN ###########################################
 
-aladin_dust = '/home/puyf/Documents/dust_brut_1/aladin/aladin_dust_mensuel_1960-2024.nc'
-aladin_aer = '/home/puyf/Documents/dust_brut_1/aladin/aladin_aer_mensuel_1960-2024.nc'
+aladin_dust = '/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/aladin/aladin_dust_mensuel_1960-2024.nc'
+aladin_aer = '/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/aladin/aladin_aer_mensuel_1960-2024.nc'
 
 aod_data_3 = load_data(aladin_aer, "od550aer", YEAR_MIN, YEAR_MAX,JJSO)
 aod_data_4 = load_data(aladin_dust, 'od550dust', YEAR_MIN, YEAR_MAX,JJSO)

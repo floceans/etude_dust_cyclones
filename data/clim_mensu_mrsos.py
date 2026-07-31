@@ -14,8 +14,8 @@ LON_MIN, LON_MAX = -10, 15
 FONT_SIZE = 21
 
 # Chemins des fichiers
-file_ref = "/cnrm/mosca/USERS/puyf/NO_SAVE/mrso/mrsos_concat_ref_3weeks_monthly_1960-2000.nc"
-file_exp = "/cnrm/mosca/USERS/puyf/NO_SAVE/mrso/mrsos_concat_norad_3weeks_monthly_1960-2000.nc"
+file_ref = "/cnrm/mosca/USERS/puyf/stage/data/mrso/mrsos_concat_ref_3weeks_monthly_1960-2000.nc"
+file_exp = "/cnrm/mosca/USERS/puyf/stage/data/mrso/mrsos_concat_norad_3weeks_monthly_1960-2000.nc"
 ############################################################################################
 
 def get_mrsos_climatology(path, name, is_jjaso, ymin, ymax, lat_min, lat_max, lon_min, lon_max):

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-input="/home/puyf/Documents/dust_brut_1/aladin/aladin_dust_mensuel_1960-2024.nc" #"aladin_dust_mensuel_3weeks_1960-2024.nc"
+input="/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/aladin/aladin_dust_mensuel_1960-2024.nc" #"aladin_dust_mensuel_3weeks_1960-2024.nc"
 output="aladin_dust_mensuel_MDR_1960-2024.nc"
 
 

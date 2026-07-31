@@ -5,7 +5,7 @@ from func import load_data, print_stats, plot_aod_map, plot_time_series, plot_hi
 ### PLOT AOD pour années les +/- fortes en ACE ###
 
 # --- CONFIGURATION ---
-FILE_PATH = "/home/puyf/Documents/dust_brut_1/aladin/aladin_dust_3s_mensuel_1960-2024.nc.nc"
+FILE_PATH = "/mnt/nfs/d10/mosca/USERS/puyf/stage/data/data_dust/aladin/aladin_dust_3s_mensuel_1960-2024.nc.nc"
 
 # On peut spécifier la variable si on veut être précis
 VAR_AOD = "od550dust"

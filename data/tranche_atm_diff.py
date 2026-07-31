@@ -12,10 +12,10 @@ LAT_MIN = 0
 LAT_MAX = 30
 # =================================================
 
-dossier_ref = "/home/puyf/Documents/data/vents_aladin/ref/"
-dossier_norad = "/home/puyf/Documents/data/vents_aladin/NoRadDust/"
+dossier_ref = "/cnrm/mosca/USERS/puyf/stage/data/vents_aladin/ref/"
+dossier_norad = "/cnrm/mosca/USERS/puyf/stage/data/vents_aladin/NoRadDust"
 
-file_list_ref = [dossier_ref + 'ua_ref_3weeks_monthly_1960-2023.nc']
+file_list_ref = [dossier_ref + 'ua_ref_3weeks_monthly_1960-2000.nc']
 file_list_norad = [dossier_norad + 'ua_NoRadDust_3weeks_monthly_1960-2000.nc']
 
 print("Chargement des données...")

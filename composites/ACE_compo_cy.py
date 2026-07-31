@@ -3,10 +3,10 @@ import xarray as xr
 import matplotlib.pyplot as plt
 
 
-fichier_entree = "/cnrm/mosca/USERS/puyf/NO_SAVE/composites/compo_cy_aod_1960-2024.nc"
+fichier_entree = "/cnrm/mosca/USERS/puyf/stage/data/composites/compo_cy_aod_1960-2024.nc"
 Nombre_Top_X = 458
 
-print(f"📂 Chargement du fichier : {fichier_entree}")
+print(f" Chargement du fichier : {fichier_entree}")
 ds = xr.open_dataset(fichier_entree)
 
 numrec = ds["numrec"].values
@@ -16,7 +16,7 @@ numdat = ds["numdat"].values
 indices_cyclones = np.where(numrec == 1)[0]
 indices_limites = np.append(indices_cyclones, len(numrec))
 
-print(f"🌪️ {len(indices_cyclones)} cyclones identifiés. Calcul de l'ACE en cours...")
+print(f" {len(indices_cyclones)} cyclones identifiés. Calcul de l'ACE en cours...")
 
 cyclone_stats = []
 year_counter = {}

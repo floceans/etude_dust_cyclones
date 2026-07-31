@@ -23,10 +23,10 @@ else:
         sys.exit(1)
 
 # --- Chemins des fichiers ---
-file_ta_norad = "/home/puyf/Documents/data/temp_aladin/temp_norad/ta_norad_3weeks_monthly_1960-2000.nc"
-file_hus_norad = "/cnrm/mosca/USERS/puyf/NO_SAVE/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
-file_ta_ref = "/home/puyf/Documents/data/temp_aladin/temp_ref/ta_ref_3weeks_monthly_1960-2023.nc"
-file_hus_ref = "/cnrm/mosca/USERS/puyf/NO_SAVE/hus/hus_concat_ref_3weeks_monthly_1960-2023.nc"
+file_ta_norad = "/cnrm/mosca/USERS/puyf/stage/data/temp/ta_norad_3weeks_monthly_1960-2000.nc"
+file_hus_norad = "/cnrm/mosca/USERS/puyf/stage/data/hus/hus_concat_NoRadDust_3weeks_monthly_1960-2023.nc"
+file_ta_ref = "/cnrm/mosca/USERS/puyf/stage/data/temp/ta_ref_3weeks_monthly_1960-2023.nc"
+file_hus_ref = "/cnrm/mosca/USERS/puyf/stage/data/hus/hus_concat_ref_3weeks_monthly_1960-2023.nc"
 
 def T_to_theta_e(temp, hum_s, plev_pa):
     Lv, Cp, P0, R = 2.5e6, 1004.0, 100000.0, 287.05

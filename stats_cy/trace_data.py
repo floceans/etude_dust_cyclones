@@ -21,12 +21,12 @@ SEUIL_VORTICITE = 0
 SEUIL_VENT = 26
 SEUIL_PRESSION = 1005
 
-filename_1 = "ALADIN-NoRadDust-rel10_1960_2000.csv"
+filename_1 = "/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN-NoRadDust-rel10_1960_2000.csv"
 svort_1 = 0
 spress_1 = 1005
 svent_1 = 26
 
-filename_2 = "ALADIN_rel10_1960_2024.csv"
+filename_2 = "/cnrm/mosca/USERS/puyf/stage/data/tracks/ALADIN_rel10_1960_2024.csv"
 svort_2 = SEUIL_VORTICITE
 spress_2 = SEUIL_PRESSION
 svent_2 = SEUIL_VENT
